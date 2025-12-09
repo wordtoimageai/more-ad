@@ -8,9 +8,10 @@ import Logo from "@/components/Logo";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { z } from "zod";
+import PasswordStrengthIndicator, { isPasswordStrong } from "@/components/PasswordStrengthIndicator";
 
 const emailSchema = z.string().email("Please enter a valid email address");
-const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+const passwordSchema = z.string().min(8, "Password must be at least 8 characters");
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -51,6 +52,10 @@ export default function AuthPage() {
     
     try {
       passwordSchema.parse(password);
+      // For signup, also check password strength
+      if (!isLogin && !isPasswordStrong(password)) {
+        newErrors.password = "Please choose a stronger password";
+      }
     } catch (e) {
       if (e instanceof z.ZodError) {
         newErrors.password = e.errors[0].message;
@@ -166,6 +171,7 @@ export default function AuthPage() {
                   className="bg-background/50"
                   disabled={isLoading}
                 />
+                {!isLogin && <PasswordStrengthIndicator password={password} />}
                 {errors.password && (
                   <p className="text-sm text-destructive">{errors.password}</p>
                 )}
