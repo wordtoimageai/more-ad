@@ -1,20 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
-import { Button } from "@/components/ui/button";
 import AdInput from "@/components/app/AdInput";
 import AdOutput from "@/components/app/AdOutput";
 import AdHistory from "@/components/app/AdHistory";
 import { GeneratedAd } from "@/types/ad";
 import { generateAd } from "@/lib/adGenerator";
-import { saveToHistory } from "@/lib/storage";
-import { Link } from "react-router-dom";
-import { History, Home } from "lucide-react";
+import { saveAdToCloud } from "@/lib/cloudStorage";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { History, LogOut, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
-const AppPage = () => {
-  const [generatedAd, setGeneratedAd] = useState<GeneratedAd | null>(null);
+export default function AppPage() {
+  const navigate = useNavigate();
+  const { user, isLoading: authLoading, signOut, isAuthenticated } = useAuth();
+  const [currentAd, setCurrentAd] = useState<GeneratedAd | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate("/auth");
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   const handleGenerate = async (
     input: string,
@@ -24,48 +34,71 @@ const AppPage = () => {
     setIsGenerating(true);
     try {
       const ad = await generateAd(input, inputType, styleId);
-      setGeneratedAd(ad);
-      saveToHistory(ad);
+      setCurrentAd(ad);
+      
+      // Save to cloud
+      await saveAdToCloud(ad);
+      toast.success("Ad generated and saved!");
     } catch (error) {
-      console.error("Generation failed:", error);
+      console.error("Error generating ad:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate ad");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleSelectFromHistory = (ad: GeneratedAd) => {
-    setGeneratedAd(ad);
+  const handleSelectAd = (ad: GeneratedAd) => {
+    setCurrentAd(ad);
+    setIsHistoryOpen(false);
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 glass border-b border-border/50">
-        <div className="container px-4 h-16 flex items-center justify-between">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/">
             <Logo size="sm" />
           </Link>
-          <div className="flex items-center gap-2">
-            <Link to="/">
-              <Button variant="ghost" size="sm">
-                <Home className="w-4 h-4" />
-                <span className="hidden sm:inline ml-2">Home</span>
-              </Button>
-            </Link>
+          
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground hidden sm:block">
+              {user?.email}
+            </span>
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setHistoryOpen(true)}
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsHistoryOpen(true)}
+              className="relative"
             >
-              <History className="w-4 h-4" />
-              <span className="hidden sm:inline ml-2">History</span>
+              <History className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-5 h-5" />
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <motion.div
           className="text-center mb-8"
           initial={{ opacity: 0, y: -20 }}
@@ -109,19 +142,17 @@ const AppPage = () => {
               </span>
               Generated Ad
             </h2>
-            <AdOutput ad={generatedAd} isGenerating={isGenerating} />
+            <AdOutput ad={currentAd} isGenerating={isGenerating} />
           </motion.div>
         </div>
       </main>
 
       {/* History Sidebar */}
       <AdHistory
-        onSelectAd={handleSelectFromHistory}
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
+        onSelectAd={handleSelectAd}
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
       />
     </div>
   );
-};
-
-export default AppPage;
+}

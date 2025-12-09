@@ -1,0 +1,95 @@
+import { supabase } from "@/integrations/supabase/client";
+import { GeneratedAd } from "@/types/ad";
+
+export const saveAdToCloud = async (ad: GeneratedAd): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { error } = await supabase.from("ad_history").insert({
+    user_id: user.id,
+    headline: ad.headline,
+    body_short: ad.bodyShort,
+    body_long: ad.bodyLong,
+    hashtags: ad.hashtags,
+    cta: ad.cta,
+    target_audience: ad.targetAudience,
+    images: ad.images,
+    style: ad.style,
+    input_type: ad.input.type,
+    input_value: ad.input.value,
+  });
+
+  if (error) {
+    console.error("Error saving ad to cloud:", error);
+    throw new Error("Failed to save ad");
+  }
+};
+
+export const getCloudHistory = async (): Promise<GeneratedAd[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("ad_history")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching cloud history:", error);
+    return [];
+  }
+
+  return data.map((item) => ({
+    id: item.id,
+    headline: item.headline,
+    bodyShort: item.body_short,
+    bodyLong: item.body_long,
+    hashtags: item.hashtags,
+    cta: item.cta,
+    targetAudience: item.target_audience,
+    images: item.images,
+    style: item.style,
+    createdAt: new Date(item.created_at),
+    input: {
+      type: item.input_type as "image" | "url" | "description",
+      value: item.input_value,
+    },
+  }));
+};
+
+export const deleteFromCloudHistory = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from("ad_history")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error deleting from cloud history:", error);
+    throw new Error("Failed to delete ad");
+  }
+};
+
+export const clearCloudHistory = async (): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { error } = await supabase
+    .from("ad_history")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error clearing cloud history:", error);
+    throw new Error("Failed to clear history");
+  }
+};

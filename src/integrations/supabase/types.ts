@@ -14,7 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ad_history: {
+        Row: {
+          body_long: string
+          body_short: string
+          created_at: string
+          cta: string
+          hashtags: string[]
+          headline: string
+          id: string
+          images: string[]
+          input_type: string
+          input_value: string
+          style: string
+          target_audience: string
+          user_id: string
+        }
+        Insert: {
+          body_long: string
+          body_short: string
+          created_at?: string
+          cta: string
+          hashtags: string[]
+          headline: string
+          id?: string
+          images: string[]
+          input_type: string
+          input_value: string
+          style: string
+          target_audience: string
+          user_id: string
+        }
+        Update: {
+          body_long?: string
+          body_short?: string
+          created_at?: string
+          cta?: string
+          hashtags?: string[]
+          headline?: string
+          id?: string
+          images?: string[]
+          input_type?: string
+          input_value?: string
+          style?: string
+          target_audience?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
