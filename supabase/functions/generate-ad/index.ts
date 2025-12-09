@@ -12,13 +12,100 @@ interface AdRequest {
   styleName: string;
 }
 
+// Input validation constants
+const MAX_INPUT_LENGTH = 10000;
+const MAX_STYLE_ID_LENGTH = 50;
+const MAX_STYLE_NAME_LENGTH = 100;
+const VALID_INPUT_TYPES = ["image", "url", "description"] as const;
+const VALID_STYLE_IDS = ["simple", "emotional", "storytelling", "viral", "short-form"] as const;
+
+// Sanitize string input - remove potential injection patterns
+function sanitizeInput(input: string): string {
+  return input
+    .trim()
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
+    .substring(0, MAX_INPUT_LENGTH);
+}
+
+// Validate URL format
+function isValidUrl(str: string): boolean {
+  try {
+    const url = new URL(str);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+// Validate the request payload
+function validateRequest(body: unknown): { valid: true; data: AdRequest } | { valid: false; error: string } {
+  if (!body || typeof body !== 'object') {
+    return { valid: false, error: "Invalid request body" };
+  }
+
+  const { input, inputType, styleId, styleName } = body as Record<string, unknown>;
+
+  // Validate input
+  if (typeof input !== 'string' || input.trim().length === 0) {
+    return { valid: false, error: "Input is required and must be a non-empty string" };
+  }
+  if (input.length > MAX_INPUT_LENGTH) {
+    return { valid: false, error: `Input exceeds maximum length of ${MAX_INPUT_LENGTH} characters` };
+  }
+
+  // Validate inputType
+  if (!VALID_INPUT_TYPES.includes(inputType as typeof VALID_INPUT_TYPES[number])) {
+    return { valid: false, error: `Invalid input type. Must be one of: ${VALID_INPUT_TYPES.join(', ')}` };
+  }
+
+  // Validate URL if inputType is "url"
+  if (inputType === "url" && !isValidUrl(input)) {
+    return { valid: false, error: "Invalid URL format. Must be a valid HTTP or HTTPS URL" };
+  }
+
+  // Validate styleId
+  if (typeof styleId !== 'string' || styleId.length > MAX_STYLE_ID_LENGTH) {
+    return { valid: false, error: "Invalid style ID" };
+  }
+  if (!VALID_STYLE_IDS.includes(styleId as typeof VALID_STYLE_IDS[number])) {
+    return { valid: false, error: `Invalid style ID. Must be one of: ${VALID_STYLE_IDS.join(', ')}` };
+  }
+
+  // Validate styleName
+  if (typeof styleName !== 'string' || styleName.length === 0 || styleName.length > MAX_STYLE_NAME_LENGTH) {
+    return { valid: false, error: "Invalid style name" };
+  }
+
+  return {
+    valid: true,
+    data: {
+      input: sanitizeInput(input),
+      inputType: inputType as AdRequest['inputType'],
+      styleId: styleId,
+      styleName: styleName.trim().substring(0, MAX_STYLE_NAME_LENGTH),
+    }
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { input, inputType, styleId, styleName } = await req.json() as AdRequest;
+    const body = await req.json();
+    
+    // Validate and sanitize input
+    const validation = validateRequest(body);
+    if (!validation.valid) {
+      console.error("Validation error:", validation.error);
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { input, inputType, styleId, styleName } = validation.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
