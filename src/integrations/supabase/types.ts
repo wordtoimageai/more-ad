@@ -62,6 +62,36 @@ export type Database = {
         }
         Relationships: []
       }
+      login_attempts: {
+        Row: {
+          attempt_count: number
+          created_at: string | null
+          email: string
+          id: string
+          last_attempt_at: string | null
+          locked_until: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attempt_count?: number
+          created_at?: string | null
+          email: string
+          id?: string
+          last_attempt_at?: string | null
+          locked_until?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attempt_count?: number
+          created_at?: string | null
+          email?: string
+          id?: string
+          last_attempt_at?: string | null
+          locked_until?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -121,6 +151,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_account_locked: {
+        Args: { p_email: string }
+        Returns: {
+          attempts_remaining: number
+          is_locked: boolean
+          locked_until: string
+        }[]
+      }
       check_rate_limit: {
         Args: {
           p_endpoint: string
@@ -134,6 +172,15 @@ export type Database = {
           reset_at: string
         }[]
       }
+      record_failed_login: {
+        Args: { p_email: string }
+        Returns: {
+          attempts_remaining: number
+          is_now_locked: boolean
+          locked_until: string
+        }[]
+      }
+      reset_login_attempts: { Args: { p_email: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
