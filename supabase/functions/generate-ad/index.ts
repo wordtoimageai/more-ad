@@ -1,15 +1,26 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting configuration
+const RATE_LIMIT_MAX_REQUESTS = 50; // Max requests per window
+const RATE_LIMIT_WINDOW_MINUTES = 60; // Time window in minutes
+
 interface AdRequest {
   input: string;
   inputType: "image" | "url" | "description";
   styleId: string;
   styleName: string;
+}
+
+interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  reset_at: string;
 }
 
 // Input validation constants
@@ -93,6 +104,70 @@ serve(async (req) => {
   }
 
   try {
+    // Extract user ID from the authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authorization header required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create Supabase client with service role for rate limiting
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verify the user's JWT and get user ID
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error("Auth error:", authError);
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check rate limit
+    const { data: rateLimitData, error: rateLimitError } = await supabase
+      .rpc("check_rate_limit", {
+        p_user_id: user.id,
+        p_endpoint: "generate-ad",
+        p_max_requests: RATE_LIMIT_MAX_REQUESTS,
+        p_window_minutes: RATE_LIMIT_WINDOW_MINUTES,
+      });
+
+    if (rateLimitError) {
+      console.error("Rate limit check error:", rateLimitError);
+      // Continue without rate limiting if there's an error (fail open for usability)
+    } else if (rateLimitData && rateLimitData.length > 0) {
+      const rateLimit = rateLimitData[0] as RateLimitResult;
+      
+      if (!rateLimit.allowed) {
+        console.log(`Rate limit exceeded for user ${user.id}`);
+        return new Response(
+          JSON.stringify({ 
+            error: "Rate limit exceeded. Please try again later.",
+            retryAfter: rateLimit.reset_at
+          }),
+          { 
+            status: 429, 
+            headers: { 
+              ...corsHeaders, 
+              "Content-Type": "application/json",
+              "X-RateLimit-Limit": String(RATE_LIMIT_MAX_REQUESTS),
+              "X-RateLimit-Remaining": "0",
+              "X-RateLimit-Reset": rateLimit.reset_at,
+            } 
+          }
+        );
+      }
+      
+      console.log(`Rate limit check passed for user ${user.id}: ${rateLimit.remaining} requests remaining`);
+    }
+
     const body = await req.json();
     
     // Validate and sanitize input
