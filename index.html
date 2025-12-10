@@ -30,6 +30,67 @@
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
     <link rel="canonical" href="https://more.ad" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://more.ad/#organization",
+          "name": "More.ad",
+          "url": "https://more.ad",
+          "logo": "https://more.ad/favicon.png",
+          "description": "AI-powered micro-advertising engine for creating high-converting ads instantly.",
+          "sameAs": []
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://more.ad/#website",
+          "url": "https://more.ad",
+          "name": "More.ad",
+          "description": "Generate high-converting ad copy, visuals, and targeting for Facebook, Instagram, TikTok, Google, and more — all in seconds with AI.",
+          "publisher": {
+            "@id": "https://more.ad/#organization"
+          }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://more.ad/#app",
+          "name": "More.ad",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "description": "AI-powered ad generation tool that creates headlines, body copy, hashtags, CTAs, and targeting for all major platforms in seconds.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "featureList": [
+            "AI-powered ad copy generation",
+            "Multi-platform support (Facebook, Instagram, TikTok, Google, YouTube, X)",
+            "Target audience suggestions",
+            "Hashtag generation",
+            "Call-to-action recommendations"
+          ]
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://more.ad/#webpage",
+          "url": "https://more.ad",
+          "name": "More.ad - AI-Powered Ad Generation | Create Better Ads Instantly",
+          "description": "Generate high-converting ad copy, visuals, and targeting for Facebook, Instagram, TikTok, Google, and more — all in seconds with AI.",
+          "isPartOf": {
+            "@id": "https://more.ad/#website"
+          },
+          "about": {
+            "@id": "https://more.ad/#app"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
 
   <body>
