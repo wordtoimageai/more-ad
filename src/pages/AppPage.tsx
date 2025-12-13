@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { History, LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 
 export default function AppPage() {
   const navigate = useNavigate();
@@ -19,6 +20,9 @@ export default function AppPage() {
   const [currentAd, setCurrentAd] = useState<GeneratedAd | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  
+  // Session timeout - auto logout after 15 minutes of inactivity
+  useSessionTimeout(isAuthenticated);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
