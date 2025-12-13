@@ -18,11 +18,13 @@ export const generateAd = async (
   });
 
   if (error) {
-    console.error("Error calling generate-ad function:", error);
-    throw new Error(error.message || "Failed to generate ad");
+    // Log error details for debugging without exposing to user
+    console.error("Ad generation failed");
+    throw new Error("Failed to generate ad. Please try again.");
   }
 
   if (data.error) {
+    // Return sanitized error from server (already sanitized on backend)
     throw new Error(data.error);
   }
 
