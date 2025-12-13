@@ -27,8 +27,81 @@ interface RateLimitResult {
 const MAX_INPUT_LENGTH = 10000;
 const MAX_STYLE_ID_LENGTH = 50;
 const MAX_STYLE_NAME_LENGTH = 100;
+const MAX_AI_FIELD_LENGTH = 5000; // Max length for AI-generated fields
 const VALID_INPUT_TYPES = ["image", "url", "description"] as const;
 const VALID_STYLE_IDS = ["simple", "emotional", "storytelling", "viral", "short-form"] as const;
+
+// Sanitize AI-generated content to prevent XSS
+function sanitizeAIContent(content: string): string {
+  if (typeof content !== 'string') return '';
+  return content
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+    .substring(0, MAX_AI_FIELD_LENGTH);
+}
+
+// Validate and sanitize AI response structure
+function validateAIResponse(content: unknown): { 
+  valid: true; 
+  data: { 
+    headline: string; 
+    bodyShort: string; 
+    bodyLong: string; 
+    hashtags: string[]; 
+    cta: string; 
+    targetAudience: string; 
+  } 
+} | { valid: false; error: string } {
+  if (!content || typeof content !== 'object') {
+    return { valid: false, error: 'Invalid AI response structure' };
+  }
+
+  const obj = content as Record<string, unknown>;
+  
+  // Validate required fields exist
+  const requiredFields = ['headline', 'bodyShort', 'bodyLong', 'hashtags', 'cta', 'targetAudience'];
+  for (const field of requiredFields) {
+    if (!(field in obj)) {
+      return { valid: false, error: `Missing required field: ${field}` };
+    }
+  }
+
+  // Validate and sanitize hashtags array
+  if (!Array.isArray(obj.hashtags)) {
+    return { valid: false, error: 'hashtags must be an array' };
+  }
+  const sanitizedHashtags = obj.hashtags
+    .filter((tag): tag is string => typeof tag === 'string')
+    .slice(0, 10) // Limit to 10 hashtags
+    .map(tag => sanitizeAIContent(tag.substring(0, 100))); // Limit hashtag length
+
+  return {
+    valid: true,
+    data: {
+      headline: sanitizeAIContent(String(obj.headline || '')),
+      bodyShort: sanitizeAIContent(String(obj.bodyShort || '')),
+      bodyLong: sanitizeAIContent(String(obj.bodyLong || '')),
+      hashtags: sanitizedHashtags,
+      cta: sanitizeAIContent(String(obj.cta || '')),
+      targetAudience: sanitizeAIContent(String(obj.targetAudience || '')),
+    }
+  };
+}
+
+// Map internal errors to safe user-facing messages
+function getSafeErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    if (message.includes('rate limit')) return 'Rate limit exceeded. Please try again later.';
+    if (message.includes('authentication') || message.includes('auth')) return 'Authentication required.';
+    if (message.includes('validation')) return 'Invalid request data.';
+    if (message.includes('parse') || message.includes('json')) return 'Failed to process AI response.';
+  }
+  return 'An error occurred while generating your ad. Please try again.';
+}
 
 // Sanitize string input - remove potential injection patterns
 function sanitizeInput(input: string): string {
@@ -141,8 +214,14 @@ serve(async (req) => {
 
     if (rateLimitError) {
       console.error("Rate limit check error:", rateLimitError);
-      // Continue without rate limiting if there's an error (fail open for usability)
-    } else if (rateLimitData && rateLimitData.length > 0) {
+      // Fail closed - deny request if rate limiting system is unavailable
+      return new Response(
+        JSON.stringify({ error: "Service temporarily unavailable. Please try again." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (rateLimitData && rateLimitData.length > 0) {
       const rateLimit = rateLimitData[0] as RateLimitResult;
       
       if (!rateLimit.allowed) {
@@ -252,15 +331,24 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
     console.log("AI response:", content);
 
     // Parse the JSON response
-    let adContent;
+    let parsedContent;
     try {
       // Clean the response - remove markdown code blocks if present
       const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      adContent = JSON.parse(cleanContent);
+      parsedContent = JSON.parse(cleanContent);
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
       throw new Error("Failed to parse AI response as JSON");
     }
+
+    // Validate and sanitize AI response to prevent XSS
+    const aiValidation = validateAIResponse(parsedContent);
+    if (!aiValidation.valid) {
+      console.error("AI response validation failed:", aiValidation.error);
+      throw new Error("AI response validation failed");
+    }
+
+    const adContent = aiValidation.data;
 
     // Generate placeholder images (in future, could use image generation)
     const images = [
@@ -271,12 +359,12 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
 
     const result = {
       id: `ad_${Date.now()}`,
-      headline: adContent.headline || "Your Amazing Product",
-      bodyShort: adContent.bodyShort || "Discover something amazing.",
-      bodyLong: adContent.bodyLong || "Experience the difference with our product.",
-      hashtags: adContent.hashtags || ["#Product", "#Sale", "#Shop"],
-      cta: adContent.cta || "Shop Now",
-      targetAudience: adContent.targetAudience || "General audience",
+      headline: adContent.headline || sanitizeAIContent("Your Amazing Product"),
+      bodyShort: adContent.bodyShort || sanitizeAIContent("Discover something amazing."),
+      bodyLong: adContent.bodyLong || sanitizeAIContent("Experience the difference with our product."),
+      hashtags: adContent.hashtags.length > 0 ? adContent.hashtags : ["#Product", "#Sale", "#Shop"],
+      cta: adContent.cta || sanitizeAIContent("Shop Now"),
+      targetAudience: adContent.targetAudience || sanitizeAIContent("General audience"),
       images,
       style: styleName,
       createdAt: new Date().toISOString(),
@@ -291,8 +379,9 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
     });
   } catch (error) {
     console.error("Error in generate-ad function:", error);
+    // Return sanitized error message to prevent information leakage
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: getSafeErrorMessage(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
