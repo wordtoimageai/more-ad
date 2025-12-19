@@ -47,15 +47,13 @@ const AdOutput = ({ ad, isGenerating, onAdUpdate }: AdOutputProps) => {
       let shareToken = ad.shareToken;
 
       if (!shareToken) {
-        // Generate a new share token
-        shareToken = crypto.randomUUID().slice(0, 12);
-        
-        const { error } = await supabase
-          .from("ad_history")
-          .update({ share_token: shareToken })
-          .eq("id", ad.id);
+        // Generate a secure share token server-side
+        const { data, error } = await supabase.rpc('generate_share_token', { 
+          p_ad_id: ad.id 
+        });
 
         if (error) throw error;
+        shareToken = data;
 
         // Update local state
         if (onAdUpdate) {
