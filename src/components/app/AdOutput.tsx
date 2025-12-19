@@ -1,18 +1,21 @@
 import { motion } from "framer-motion";
 import { GeneratedAd } from "@/types/ad";
 import { Button } from "@/components/ui/button";
-import { Copy, Download, Check, Hash, Target, Megaphone, ImageIcon } from "lucide-react";
+import { Copy, Download, Check, Hash, Target, Megaphone, ImageIcon, Share2, Link } from "lucide-react";
 import { useState } from "react";
 import { copyToClipboard, formatAdForCopy, exportToTxt } from "@/lib/export";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdOutputProps {
   ad: GeneratedAd | null;
   isGenerating: boolean;
+  onAdUpdate?: (ad: GeneratedAd) => void;
 }
 
-const AdOutput = ({ ad, isGenerating }: AdOutputProps) => {
+const AdOutput = ({ ad, isGenerating, onAdUpdate }: AdOutputProps) => {
   const [copied, setCopied] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const handleCopyAll = async () => {
     if (!ad) return;
@@ -34,6 +37,48 @@ const AdOutput = ({ ad, isGenerating }: AdOutputProps) => {
       title: "Exported!",
       description: "Ad saved as .txt file",
     });
+  };
+
+  const handleShare = async () => {
+    if (!ad) return;
+    setIsSharing(true);
+
+    try {
+      let shareToken = ad.shareToken;
+
+      if (!shareToken) {
+        // Generate a new share token
+        shareToken = crypto.randomUUID().slice(0, 12);
+        
+        const { error } = await supabase
+          .from("ad_history")
+          .update({ share_token: shareToken })
+          .eq("id", ad.id);
+
+        if (error) throw error;
+
+        // Update local state
+        if (onAdUpdate) {
+          onAdUpdate({ ...ad, shareToken });
+        }
+      }
+
+      const shareUrl = `${window.location.origin}/share/${shareToken}`;
+      await navigator.clipboard.writeText(shareUrl);
+      
+      toast({
+        title: "Link copied!",
+        description: "Share link copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate share link",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   if (isGenerating) {
@@ -100,12 +145,20 @@ const AdOutput = ({ ad, isGenerating }: AdOutputProps) => {
           )}
         </Button>
         <Button
-          onClick={handleExport}
+          onClick={handleShare}
           variant="outline"
           className="flex-1"
+          disabled={isSharing}
+        >
+          <Share2 className="w-4 h-4" />
+          {ad.shareToken ? "Copy Link" : "Share"}
+        </Button>
+        <Button
+          onClick={handleExport}
+          variant="outline"
+          size="icon"
         >
           <Download className="w-4 h-4" />
-          Export
         </Button>
       </div>
 

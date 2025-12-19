@@ -16,6 +16,7 @@ export interface GeneratedAd {
   images: string[];
   style: string;
   createdAt: Date;
+  shareToken?: string | null;
   input: {
     type: "image" | "url" | "description";
     value: string;
