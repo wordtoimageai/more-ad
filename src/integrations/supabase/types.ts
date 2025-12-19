@@ -175,6 +175,23 @@ export type Database = {
           reset_at: string
         }[]
       }
+      get_shared_ad: {
+        Args: { p_share_token: string }
+        Returns: {
+          body_long: string
+          body_short: string
+          created_at: string
+          cta: string
+          hashtags: string[]
+          headline: string
+          id: string
+          images: string[]
+          input_type: string
+          input_value: string
+          style: string
+          target_audience: string
+        }[]
+      }
       record_failed_login: {
         Args: { p_email: string }
         Returns: {

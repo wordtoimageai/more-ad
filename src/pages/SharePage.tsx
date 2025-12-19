@@ -21,10 +21,9 @@ const SharePage = () => {
         return;
       }
 
+      // Use secure RPC function that doesn't expose user_id
       const { data, error: fetchError } = await supabase
-        .from("ad_history")
-        .select("*")
-        .eq("share_token", shareToken)
+        .rpc("get_shared_ad", { p_share_token: shareToken })
         .single();
 
       if (fetchError || !data) {
