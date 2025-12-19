@@ -175,6 +175,7 @@ export type Database = {
           reset_at: string
         }[]
       }
+      generate_share_token: { Args: { p_ad_id: string }; Returns: string }
       get_shared_ad: {
         Args: { p_share_token: string }
         Returns: {
