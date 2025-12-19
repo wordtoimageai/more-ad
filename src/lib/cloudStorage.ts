@@ -23,7 +23,6 @@ export const saveAdToCloud = async (ad: GeneratedAd): Promise<void> => {
   });
 
   if (error) {
-    console.error("Cloud storage operation failed");
     throw new Error("Failed to save ad. Please try again.");
   }
 };
@@ -42,7 +41,6 @@ export const getCloudHistory = async (): Promise<GeneratedAd[]> => {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Cloud storage operation failed");
     return [];
   }
 
@@ -72,7 +70,6 @@ export const deleteFromCloudHistory = async (id: string): Promise<void> => {
     .eq("id", id);
 
   if (error) {
-    console.error("Cloud storage operation failed");
     throw new Error("Failed to delete ad. Please try again.");
   }
 };
@@ -90,7 +87,6 @@ export const clearCloudHistory = async (): Promise<void> => {
     .eq("user_id", user.id);
 
   if (error) {
-    console.error("Cloud storage operation failed");
     throw new Error("Failed to clear history. Please try again.");
   }
 };

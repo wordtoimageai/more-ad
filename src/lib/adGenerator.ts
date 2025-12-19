@@ -18,8 +18,6 @@ export const generateAd = async (
   });
 
   if (error) {
-    // Log error details for debugging without exposing to user
-    console.error("Ad generation failed");
     throw new Error("Failed to generate ad. Please try again.");
   }
 
