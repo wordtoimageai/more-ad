@@ -196,7 +196,6 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      console.error("Auth error:", authError);
       return new Response(
         JSON.stringify({ error: "Invalid authentication token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -213,7 +212,6 @@ serve(async (req) => {
       });
 
     if (rateLimitError) {
-      console.error("Rate limit check error:", rateLimitError);
       // Fail closed - deny request if rate limiting system is unavailable
       return new Response(
         JSON.stringify({ error: "Service temporarily unavailable. Please try again." }),
@@ -225,7 +223,6 @@ serve(async (req) => {
       const rateLimit = rateLimitData[0] as RateLimitResult;
       
       if (!rateLimit.allowed) {
-        console.log(`Rate limit exceeded for user ${user.id}`);
         return new Response(
           JSON.stringify({ 
             error: "Rate limit exceeded. Please try again later.",
@@ -243,8 +240,6 @@ serve(async (req) => {
           }
         );
       }
-      
-      console.log(`Rate limit check passed for user ${user.id}: ${rateLimit.remaining} requests remaining`);
     }
 
     const body = await req.json();
@@ -252,7 +247,6 @@ serve(async (req) => {
     // Validate and sanitize input
     const validation = validateRequest(body);
     if (!validation.valid) {
-      console.error("Validation error:", validation.error);
       return new Response(
         JSON.stringify({ error: validation.error }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -286,8 +280,6 @@ ${input}
 
 Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
 
-    console.log("Calling Lovable AI Gateway...");
-
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -316,8 +308,6 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
       throw new Error(`AI gateway error: ${response.status}`);
     }
 
@@ -328,23 +318,19 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
       throw new Error("No content in AI response");
     }
 
-    console.log("AI response:", content);
-
     // Parse the JSON response
     let parsedContent;
     try {
       // Clean the response - remove markdown code blocks if present
       const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       parsedContent = JSON.parse(cleanContent);
-    } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError);
+    } catch {
       throw new Error("Failed to parse AI response as JSON");
     }
 
     // Validate and sanitize AI response to prevent XSS
     const aiValidation = validateAIResponse(parsedContent);
     if (!aiValidation.valid) {
-      console.error("AI response validation failed:", aiValidation.error);
       throw new Error("AI response validation failed");
     }
 
@@ -378,7 +364,6 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in generate-ad function:", error);
     // Return sanitized error message to prevent information leakage
     return new Response(
       JSON.stringify({ error: getSafeErrorMessage(error) }),

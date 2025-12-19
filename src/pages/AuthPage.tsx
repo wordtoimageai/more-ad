@@ -67,7 +67,6 @@ export default function AuthPage() {
     try {
       const { data, error } = await supabase.rpc('check_account_locked', { p_email: emailToCheck });
       if (error) {
-        console.error('Error checking account lock:', error);
         return false; // Fail open to avoid blocking legitimate users
       }
       if (data && data.length > 0) {
@@ -92,7 +91,6 @@ export default function AuthPage() {
     try {
       const { data, error } = await supabase.rpc('record_failed_login', { p_email: emailToRecord });
       if (error) {
-        console.error('Error recording failed attempt:', error);
         return;
       }
       if (data && data.length > 0) {
