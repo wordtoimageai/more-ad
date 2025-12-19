@@ -26,6 +26,7 @@ export type Database = {
           images: string[]
           input_type: string
           input_value: string
+          share_token: string | null
           style: string
           target_audience: string
           user_id: string
@@ -41,6 +42,7 @@ export type Database = {
           images: string[]
           input_type: string
           input_value: string
+          share_token?: string | null
           style: string
           target_audience: string
           user_id: string
@@ -56,6 +58,7 @@ export type Database = {
           images?: string[]
           input_type?: string
           input_value?: string
+          share_token?: string | null
           style?: string
           target_audience?: string
           user_id?: string

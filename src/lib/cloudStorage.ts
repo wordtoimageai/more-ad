@@ -57,6 +57,7 @@ export const getCloudHistory = async (): Promise<GeneratedAd[]> => {
     images: item.images,
     style: item.style,
     createdAt: new Date(item.created_at),
+    shareToken: item.share_token,
     input: {
       type: item.input_type as "image" | "url" | "description",
       value: item.input_value,
