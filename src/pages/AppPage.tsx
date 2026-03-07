@@ -38,10 +38,11 @@ export default function AppPage() {
     setIsGenerating(true);
     try {
       const ad = await generateAd(input, inputType, styleId);
-      setCurrentAd(ad);
       
-      // Save to cloud
-      await saveAdToCloud(ad);
+      // Save to cloud and get the DB-generated UUID
+      const dbId = await saveAdToCloud(ad);
+      const adWithDbId = { ...ad, id: dbId };
+      setCurrentAd(adWithDbId);
       toast.success("Ad generated and saved!");
     } catch (error) {
       console.error("Error generating ad:", error);

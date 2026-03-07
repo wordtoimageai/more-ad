@@ -1,14 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { GeneratedAd } from "@/types/ad";
 
-export const saveAdToCloud = async (ad: GeneratedAd): Promise<void> => {
+export const saveAdToCloud = async (ad: GeneratedAd): Promise<string> => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
     throw new Error("User not authenticated");
   }
 
-  const { error } = await supabase.from("ad_history").insert({
+  const { data, error } = await supabase.from("ad_history").insert({
     user_id: user.id,
     headline: ad.headline,
     body_short: ad.bodyShort,
@@ -20,11 +20,13 @@ export const saveAdToCloud = async (ad: GeneratedAd): Promise<void> => {
     style: ad.style,
     input_type: ad.input.type,
     input_value: ad.input.value,
-  });
+  }).select("id").single();
 
-  if (error) {
+  if (error || !data) {
     throw new Error("Failed to save ad. Please try again.");
   }
+
+  return data.id;
 };
 
 export const getCloudHistory = async (): Promise<GeneratedAd[]> => {
