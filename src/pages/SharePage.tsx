@@ -87,7 +87,7 @@ const SharePage = () => {
           <Link to="/">
             <Logo />
           </Link>
-          <Link to="/app">
+          <Link to="/auth">
             <Button variant="gradient" size="sm">
               Create Your Own Ad
             </Button>
