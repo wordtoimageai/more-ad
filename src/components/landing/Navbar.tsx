@@ -44,9 +44,11 @@ const Navbar = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Log In
-            </Button>
+            <Link to="/auth">
+              <Button variant="ghost" size="sm">
+                Log In
+              </Button>
+            </Link>
             <Link to="/app">
               <Button variant="gradient" size="sm">
                 Start Free
@@ -83,9 +85,11 @@ const Navbar = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="ghost" size="sm">
-                  Log In
-                </Button>
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm">
+                    Log In
+                  </Button>
+                </Link>
                 <Link to="/app">
                   <Button variant="gradient" size="sm" className="w-full">
                     Start Free

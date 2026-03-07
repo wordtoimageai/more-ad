@@ -2,6 +2,17 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { GeneratedAd } from "@/types/ad";
 import { getCloudHistory, deleteFromCloudHistory, clearCloudHistory } from "@/lib/cloudStorage";
 import { toast } from "sonner";
@@ -27,21 +38,19 @@ export default function AdHistory({ onSelectAd, isOpen, onClose }: AdHistoryProp
     try {
       const ads = await getCloudHistory();
       setHistory(ads);
-    } catch (error) {
-      console.error("Error loading history:", error);
+    } catch {
       toast.error("Failed to load history");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = async (id: string) => {
     try {
       await deleteFromCloudHistory(id);
       setHistory(history.filter((ad) => ad.id !== id));
       toast.success("Ad deleted");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete ad");
     }
   };
@@ -51,7 +60,7 @@ export default function AdHistory({ onSelectAd, isOpen, onClose }: AdHistoryProp
       await clearCloudHistory();
       setHistory([]);
       toast.success("History cleared");
-    } catch (error) {
+    } catch {
       toast.error("Failed to clear history");
     }
   };
@@ -125,14 +134,32 @@ export default function AdHistory({ onSelectAd, isOpen, onClose }: AdHistoryProp
                             </span>
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => handleDelete(ad.id, e)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this ad?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently remove "{ad.headline}" from your history.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(ad.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </motion.div>
                   ))}
@@ -143,13 +170,27 @@ export default function AdHistory({ onSelectAd, isOpen, onClose }: AdHistoryProp
             {/* Footer */}
             {history.length > 0 && (
               <div className="p-4 border-t border-border">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleClearAll}
-                >
-                  Clear All History
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      Clear All History
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Clear all history?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all {history.length} ads from your history. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClearAll}>
+                        Clear All
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             )}
           </motion.div>

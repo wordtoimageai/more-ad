@@ -47,10 +47,3 @@ export const exportToTxt = (ad: GeneratedAd): void => {
   saveAs(blob, `moread-${ad.id}.txt`);
 };
 
-export const exportToDocx = (ad: GeneratedAd): void => {
-  // For simplicity, we'll export as a formatted text file with .txt extension
-  // A full .docx implementation would require a library like docx
-  const content = formatAdForCopy(ad);
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  saveAs(blob, `moread-${ad.id}.txt`);
-};
