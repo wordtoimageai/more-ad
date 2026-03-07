@@ -7,6 +7,33 @@ import { Loader2, Hash, Target, Megaphone, ImageIcon, ArrowLeft } from "lucide-r
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 
+function updateMetaTags({ title, description, image, url }: { title: string; description: string; image: string; url: string }) {
+  const setMeta = (property: string, content: string) => {
+    let el = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
+    if (!el) {
+      el = document.createElement("meta");
+      if (property.startsWith("og:") || property.startsWith("twitter:")) {
+        el.setAttribute("property", property);
+      } else {
+        el.setAttribute("name", property);
+      }
+      document.head.appendChild(el);
+    }
+    el.setAttribute("content", content);
+  };
+
+  document.title = title;
+  setMeta("og:title", title);
+  setMeta("og:description", description);
+  setMeta("og:image", image);
+  setMeta("og:url", url);
+  setMeta("og:type", "article");
+  setMeta("twitter:card", "summary_large_image");
+  setMeta("twitter:title", title);
+  setMeta("twitter:description", description);
+  setMeta("twitter:image", image);
+}
+
 const SharePage = () => {
   const { shareToken } = useParams<{ shareToken: string }>();
   const [ad, setAd] = useState<GeneratedAd | null>(null);
@@ -48,6 +75,15 @@ const SharePage = () => {
           value: data.input_value,
         },
       });
+
+      // Set OG meta tags dynamically for client-side rendering
+      updateMetaTags({
+        title: `${data.headline} | More.ad`,
+        description: data.body_short,
+        image: data.images?.[0] || "https://more-ad.lovable.app/favicon.png",
+        url: `${window.location.origin}/share/${shareToken}`,
+      });
+
       setLoading(false);
     };
 
