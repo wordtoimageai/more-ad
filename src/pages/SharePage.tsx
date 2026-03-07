@@ -196,7 +196,7 @@ const SharePage = () => {
             <p className="text-sm text-muted-foreground mb-4">
               Generate high-converting ads in seconds with AI
             </p>
-            <Link to="/app">
+            <Link to="/auth">
               <Button variant="gradient">Get Started Free</Button>
             </Link>
           </div>

@@ -71,9 +71,6 @@ const Hero = () => {
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Button variant="glass" size="xl">
-              Watch Demo
-            </Button>
           </motion.div>
 
           {/* Social Proof */}
