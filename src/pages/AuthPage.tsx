@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Logo from "@/components/Logo";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Eye, EyeOff, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import PasswordStrengthIndicator, { isPasswordStrong } from "@/components/PasswordStrengthIndicator";
 
@@ -14,12 +14,6 @@ const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters");
 
 type AuthMode = "login" | "signup" | "forgot";
-
-interface LockoutState {
-  isLocked: boolean;
-  lockedUntil: Date | null;
-  attemptsRemaining: number;
-}
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -29,7 +23,6 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [lockout, setLockout] = useState<LockoutState>({ isLocked: false, lockedUntil: null, attemptsRemaining: 5 });
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -49,75 +42,6 @@ export default function AuthPage() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Countdown timer for lockout
-  useEffect(() => {
-    if (!lockout.isLocked || !lockout.lockedUntil) return;
-    
-    const interval = setInterval(() => {
-      const now = new Date();
-      if (lockout.lockedUntil && now >= lockout.lockedUntil) {
-        setLockout({ isLocked: false, lockedUntil: null, attemptsRemaining: 5 });
-      }
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [lockout.isLocked, lockout.lockedUntil]);
-
-  const checkAccountLocked = async (emailToCheck: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.rpc('check_account_locked', { p_email: emailToCheck });
-      if (error) {
-        return false; // Fail open to avoid blocking legitimate users
-      }
-      if (data && data.length > 0) {
-        const result = data[0];
-        if (result.is_locked) {
-          setLockout({
-            isLocked: true,
-            lockedUntil: new Date(result.locked_until),
-            attemptsRemaining: 0
-          });
-          return true;
-        }
-        setLockout(prev => ({ ...prev, attemptsRemaining: result.attempts_remaining }));
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  };
-
-  const recordFailedAttempt = async (emailToRecord: string) => {
-    try {
-      const { data, error } = await supabase.rpc('record_failed_login', { p_email: emailToRecord });
-      if (error) {
-        return;
-      }
-      if (data && data.length > 0) {
-        const result = data[0];
-        if (result.is_now_locked) {
-          setLockout({
-            isLocked: true,
-            lockedUntil: new Date(result.locked_until),
-            attemptsRemaining: 0
-          });
-        } else {
-          setLockout(prev => ({ ...prev, attemptsRemaining: result.attempts_remaining }));
-        }
-      }
-    } catch {
-      // Silently fail - don't block login flow
-    }
-  };
-
-  const resetAttempts = async (emailToReset: string) => {
-    try {
-      await supabase.rpc('reset_login_attempts', { p_email: emailToReset });
-    } catch {
-      // Silently fail
-    }
-  };
-
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
     
@@ -129,11 +53,9 @@ export default function AuthPage() {
       }
     }
     
-    // Only validate password for login and signup modes
     if (mode !== "forgot") {
       try {
         passwordSchema.parse(password);
-        // For signup, also check password strength
         if (mode === "signup" && !isPasswordStrong(password)) {
           newErrors.password = "Please choose a stronger password";
         }
@@ -146,16 +68,6 @@ export default function AuthPage() {
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const formatTimeRemaining = (): string => {
-    if (!lockout.lockedUntil) return "";
-    const now = new Date();
-    const diff = lockout.lockedUntil.getTime() - now.getTime();
-    if (diff <= 0) return "";
-    const minutes = Math.floor(diff / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -178,36 +90,18 @@ export default function AuthPage() {
         toast.success("Check your email for a password reset link!");
         setMode("login");
       } else if (mode === "login") {
-        // Check if account is locked before attempting login
-        const isLocked = await checkAccountLocked(email);
-        if (isLocked) {
-          toast.error("Account temporarily locked. Please try again later.");
-          return;
-        }
-
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) {
-          // Record failed attempt
-          await recordFailedAttempt(email);
-          
           if (error.message.includes("Invalid login credentials")) {
-            const remaining = lockout.attemptsRemaining - 1;
-            if (remaining > 0) {
-              toast.error(`Invalid email or password. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`);
-            } else {
-              toast.error("Account locked due to too many failed attempts. Try again in 15 minutes.");
-            }
+            toast.error("Invalid email or password.");
           } else {
             toast.error(error.message);
           }
           return;
         }
-        
-        // Reset attempts on successful login
-        await resetAttempts(email);
         toast.success("Welcome back!");
       } else {
         const redirectUrl = `${window.location.origin}/app`;
@@ -345,20 +239,11 @@ export default function AuthPage() {
                 </button>
               )}
 
-              {lockout.isLocked && mode === "login" && (
-                <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
-                  <Lock className="w-4 h-4 flex-shrink-0" />
-                  <span>
-                    Account locked. Try again in {formatTimeRemaining()}
-                  </span>
-                </div>
-              )}
-
               <Button
                 type="submit"
                 variant="gradient"
                 className="w-full"
-                disabled={isLoading || (lockout.isLocked && mode === "login")}
+                disabled={isLoading}
               >
                 {isLoading ? (
                   <>
