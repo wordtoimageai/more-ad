@@ -17,6 +17,7 @@ const passwordSchema = z.string().min(8, "Password must be at least 8 characters
 type AuthMode = "login" | "signup" | "forgot";
 
 export default function AuthPage() {
+  useDocumentMeta({ title: "Sign In | More.ad", description: "Sign in or create an account to start generating AI-powered ad copy." });
   const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
