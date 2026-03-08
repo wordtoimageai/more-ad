@@ -15,9 +15,8 @@ export function useAuth() {
         setUser(session?.user ?? null);
         setIsLoading(false);
         
-        // Clear localStorage on sign out for security
         if (event === 'SIGNED_OUT') {
-          clearHistory();
+          localStorage.removeItem("moread_history");
         }
       }
     );
