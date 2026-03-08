@@ -9,7 +9,7 @@ import Footer from "@/components/landing/Footer";
 import { useDocumentMeta, DEFAULT_TITLE, DEFAULT_DESCRIPTION } from "@/hooks/useDocumentMeta";
 
 const Index = () => {
-  useDocumentMeta({ title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION });
+  useDocumentMeta({ title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, ogUrl: "https://more-ad.lovable.app" });
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

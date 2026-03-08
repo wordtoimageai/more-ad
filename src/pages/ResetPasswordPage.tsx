@@ -14,7 +14,7 @@ import PasswordStrengthIndicator, { isPasswordStrong } from "@/components/Passwo
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters");
 
 export default function ResetPasswordPage() {
-  useDocumentMeta({ title: "Reset Password | More.ad", description: "Set a new password for your More.ad account." });
+  useDocumentMeta({ title: "Reset Password | More.ad", description: "Set a new password for your More.ad account.", ogUrl: "https://more-ad.lovable.app/reset-password" });
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
