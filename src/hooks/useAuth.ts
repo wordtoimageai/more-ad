@@ -31,8 +31,7 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
-    // Clear localStorage before signing out
-    clearHistory();
+    localStorage.removeItem("moread_history");
     await supabase.auth.signOut();
   };
 

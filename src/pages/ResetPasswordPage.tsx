@@ -44,6 +44,8 @@ export default function ResetPasswordPage() {
         }
       }
     });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const validateForm = (): boolean => {

@@ -40,7 +40,8 @@ export const getCloudHistory = async (): Promise<GeneratedAd[]> => {
     .from("ad_history")
     .select("*")
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   if (error) {
     return [];

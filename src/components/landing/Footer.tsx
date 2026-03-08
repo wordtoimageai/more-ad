@@ -56,7 +56,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-sm">
-            © 2024 More.ad. All rights reserved.
+            © {new Date().getFullYear()} More.ad. All rights reserved.
           </p>
           <p className="text-muted-foreground text-sm">
             Made with ❤️ for creators everywhere
