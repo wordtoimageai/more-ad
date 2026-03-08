@@ -59,7 +59,8 @@ const SharePage = () => {
         return;
       }
 
-      const adLanguage = data.language || "auto";
+      const adData = data as any;
+      const adLanguage = adData.language || "auto";
       setAd({
         id: data.id,
         headline: data.headline,
