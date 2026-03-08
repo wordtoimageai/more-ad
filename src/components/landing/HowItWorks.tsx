@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-
+import { Upload, Wand2, Rocket } from "lucide-react";
 const steps = [
   {
     icon: Upload,
