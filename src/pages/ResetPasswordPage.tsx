@@ -8,6 +8,7 @@ import Logo from "@/components/Logo";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import PasswordStrengthIndicator, { isPasswordStrong } from "@/components/PasswordStrengthIndicator";
 
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters");

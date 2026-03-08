@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { History, LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 
 export default function AppPage() {
   const navigate = useNavigate();
