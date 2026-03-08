@@ -18,6 +18,7 @@ export const saveAdToCloud = async (ad: GeneratedAd): Promise<string> => {
     target_audience: ad.targetAudience,
     images: ad.images,
     style: ad.style,
+    language: ad.language || "auto",
     input_type: ad.input.type,
     input_value: ad.input.value,
   }).select("id").single();
