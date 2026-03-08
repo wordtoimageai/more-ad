@@ -44,6 +44,7 @@ const HowItWorks = () => {
   }, []);
 
   return (
+    <section className="py-24 relative" id="how-it-works">
       <div className="container px-4">
         <motion.div 
           className="text-center mb-16"

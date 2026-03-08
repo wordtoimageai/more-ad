@@ -54,6 +54,7 @@ const FAQ = () => {
   }, []);
 
   return (
+    <section className="py-24 relative" id="faq">
       <div className="container px-4">
         <motion.div 
           className="text-center mb-16"
