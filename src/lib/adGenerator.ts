@@ -38,6 +38,7 @@ export const generateAd = async (
     targetAudience: data.targetAudience,
     images: data.images,
     style: data.style,
+    language: data.language || language,
     createdAt: new Date(data.createdAt),
     input: {
       type: data.input.type,

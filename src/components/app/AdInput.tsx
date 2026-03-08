@@ -3,11 +3,18 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { AD_STYLES } from "@/types/ad";
-import { Upload, Link, FileText, Sparkles } from "lucide-react";
+import { AD_STYLES, SUPPORTED_LANGUAGES } from "@/types/ad";
+import { Upload, Link, FileText, Sparkles, Globe } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AdInputProps {
-  onGenerate: (input: string, inputType: "image" | "url" | "description", styleId: string) => void;
+  onGenerate: (input: string, inputType: "image" | "url" | "description", styleId: string, language: string) => void;
   isGenerating: boolean;
 }
 
@@ -15,6 +22,7 @@ const AdInput = ({ onGenerate, isGenerating }: AdInputProps) => {
   const [inputType, setInputType] = useState<"image" | "url" | "description">("description");
   const [inputValue, setInputValue] = useState("");
   const [selectedStyle, setSelectedStyle] = useState("simple");
+  const [selectedLanguage, setSelectedLanguage] = useState("auto");
 
   const inputTypes = [
     { id: "description", label: "Description", icon: FileText },
@@ -24,7 +32,7 @@ const AdInput = ({ onGenerate, isGenerating }: AdInputProps) => {
 
   const handleGenerate = () => {
     if (!inputValue.trim()) return;
-    onGenerate(inputValue, inputType, selectedStyle);
+    onGenerate(inputValue, inputType, selectedStyle, selectedLanguage);
   };
 
   return (
@@ -78,6 +86,29 @@ const AdInput = ({ onGenerate, isGenerating }: AdInputProps) => {
             className="bg-muted/50 border-border focus:border-primary"
           />
         )}
+      </div>
+
+      {/* Language Selector */}
+      <div>
+        <label className="text-sm font-medium text-muted-foreground mb-3 block flex items-center gap-2">
+          <Globe className="w-4 h-4" />
+          Output Language
+        </label>
+        <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+          <SelectTrigger className="bg-muted/50 border-border">
+            <SelectValue placeholder="Select language" />
+          </SelectTrigger>
+          <SelectContent>
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <SelectItem key={lang.id} value={lang.id}>
+                <span className="flex items-center gap-2">
+                  <span>{lang.flag}</span>
+                  <span>{lang.name}</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Style Selector */}

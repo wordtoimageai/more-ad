@@ -48,7 +48,7 @@ export const getCloudHistory = async (): Promise<GeneratedAd[]> => {
     return [];
   }
 
-  return data.map((item) => ({
+  return data.map((item: any) => ({
     id: item.id,
     headline: item.headline,
     bodyShort: item.body_short,
@@ -58,6 +58,7 @@ export const getCloudHistory = async (): Promise<GeneratedAd[]> => {
     targetAudience: item.target_audience,
     images: item.images,
     style: item.style,
+    language: item.language || "auto",
     createdAt: new Date(item.created_at),
     shareToken: item.share_token,
     input: {

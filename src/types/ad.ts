@@ -15,6 +15,7 @@ export interface GeneratedAd {
   targetAudience: string;
   images: string[];
   style: string;
+  language: string;
   createdAt: Date;
   shareToken?: string | null;
   input: {
@@ -22,6 +23,32 @@ export interface GeneratedAd {
     value: string;
   };
 }
+
+export const RTL_LANGUAGES = ["ar", "he", "ur", "fa"];
+
+export const SUPPORTED_LANGUAGES = [
+  { id: "auto", name: "Auto-detect", flag: "🌐" },
+  { id: "en", name: "English", flag: "🇺🇸" },
+  { id: "es", name: "Español", flag: "🇪🇸" },
+  { id: "fr", name: "Français", flag: "🇫🇷" },
+  { id: "de", name: "Deutsch", flag: "🇩🇪" },
+  { id: "pt", name: "Português", flag: "🇧🇷" },
+  { id: "it", name: "Italiano", flag: "🇮🇹" },
+  { id: "nl", name: "Nederlands", flag: "🇳🇱" },
+  { id: "ar", name: "العربية", flag: "🇸🇦" },
+  { id: "hi", name: "हिन्दी", flag: "🇮🇳" },
+  { id: "ja", name: "日本語", flag: "🇯🇵" },
+  { id: "zh", name: "中文", flag: "🇨🇳" },
+  { id: "ko", name: "한국어", flag: "🇰🇷" },
+  { id: "ru", name: "Русский", flag: "🇷🇺" },
+  { id: "tr", name: "Türkçe", flag: "🇹🇷" },
+  { id: "he", name: "עברית", flag: "🇮🇱" },
+  { id: "ur", name: "اردو", flag: "🇵🇰" },
+  { id: "fa", name: "فارسی", flag: "🇮🇷" },
+  { id: "th", name: "ไทย", flag: "🇹🇭" },
+  { id: "vi", name: "Tiếng Việt", flag: "🇻🇳" },
+  { id: "id", name: "Bahasa Indonesia", flag: "🇮🇩" },
+];
 
 export interface AdHistory {
   ads: GeneratedAd[];
