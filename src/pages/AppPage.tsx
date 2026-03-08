@@ -13,8 +13,10 @@ import { Button } from "@/components/ui/button";
 import { History, LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 
 export default function AppPage() {
+  useDocumentMeta({ title: "Create Ad | More.ad", description: "Generate high-converting ad copy with AI. Describe your product and get instant headlines, body copy, and CTAs." });
   const navigate = useNavigate();
   const { user, isLoading: authLoading, signOut, isAuthenticated } = useAuth();
   const [currentAd, setCurrentAd] = useState<GeneratedAd | null>(null);

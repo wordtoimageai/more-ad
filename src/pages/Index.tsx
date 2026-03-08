@@ -6,8 +6,10 @@ import Features from "@/components/landing/Features";
 import Pricing from "@/components/landing/Pricing";
 import FAQ from "@/components/landing/FAQ";
 import Footer from "@/components/landing/Footer";
+import { useDocumentMeta, DEFAULT_TITLE, DEFAULT_DESCRIPTION } from "@/hooks/useDocumentMeta";
 
 const Index = () => {
+  useDocumentMeta({ title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION });
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

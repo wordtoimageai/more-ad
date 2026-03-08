@@ -1,7 +1,9 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 
 const NotFound = () => {
+  useDocumentMeta({ title: "Page Not Found | More.ad" });
   const location = useLocation();
 
   useEffect(() => {
