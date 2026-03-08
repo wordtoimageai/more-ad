@@ -275,7 +275,7 @@ const OutputSection = ({ icon, title, content }: OutputSectionProps) => {
         </div>
         <button
           onClick={handleCopy}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-muted rounded"
+          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1.5 hover:bg-muted rounded"
         >
           {copied ? (
             <Check className="w-3.5 h-3.5 text-primary" />
