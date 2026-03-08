@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { GeneratedAd } from "@/types/ad";
+import { GeneratedAd, RTL_LANGUAGES } from "@/types/ad";
 import { Button } from "@/components/ui/button";
 import { Copy, Download, Check, Hash, Target, Megaphone, ImageIcon, Share2, Link } from "lucide-react";
 import { useState } from "react";

@@ -59,6 +59,7 @@ const SharePage = () => {
         return;
       }
 
+      const adLanguage = data.language || "auto";
       setAd({
         id: data.id,
         headline: data.headline,
@@ -69,6 +70,7 @@ const SharePage = () => {
         targetAudience: data.target_audience,
         images: data.images,
         style: data.style,
+        language: adLanguage,
         createdAt: new Date(data.created_at),
         input: {
           type: data.input_type as "image" | "url" | "description",
