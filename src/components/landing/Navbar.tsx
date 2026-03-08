@@ -1,22 +1,37 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const navLinks = [
-    { label: "How it Works", href: "#how-it-works" },
-    { label: "Features", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "FAQ", href: "#faq" },
+    { label: "How it Works", hash: "#how-it-works" },
+    { label: "Features", hash: "#features" },
+    { label: "Pricing", hash: "#pricing" },
+    { label: "FAQ", hash: "#faq" },
   ];
 
+  const handleNavClick = useCallback(
+    (hash: string) => {
+      setIsOpen(false);
+      if (location.pathname === "/") {
+        const el = document.querySelector(hash);
+        el?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        navigate("/" + hash);
+      }
+    },
+    [location.pathname, navigate]
+  );
+
   return (
-    <motion.nav 
+    <motion.nav
       className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -24,40 +39,32 @@ const Navbar = () => {
     >
       <div className="container px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link to="/">
             <Logo size="sm" />
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <a
+              <button
                 key={link.label}
-                href={link.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => handleNavClick(link.hash)}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors bg-transparent border-none cursor-pointer"
               >
                 {link.label}
-              </a>
+              </button>
             ))}
           </div>
 
-          {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
             <Link to="/auth">
-              <Button variant="ghost" size="sm">
-                Log In
-              </Button>
+              <Button variant="ghost" size="sm">Log In</Button>
             </Link>
             <Link to="/app">
-              <Button variant="gradient" size="sm">
-                Start Free
-              </Button>
+              <Button variant="gradient" size="sm">Start Free</Button>
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button 
+          <button
             className="md:hidden p-2"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
@@ -67,9 +74,8 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {isOpen && (
-          <motion.div 
+          <motion.div
             className="md:hidden py-4 border-t border-border"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -77,25 +83,20 @@ const Navbar = () => {
           >
             <div className="flex flex-col gap-4">
               {navLinks.map((link) => (
-                <a
+                <button
                   key={link.label}
-                  href={link.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => handleNavClick(link.hash)}
+                  className="text-muted-foreground hover:text-foreground transition-colors py-2 text-left bg-transparent border-none cursor-pointer"
                 >
                   {link.label}
-                </a>
+                </button>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 <Link to="/auth">
-                  <Button variant="ghost" size="sm">
-                    Log In
-                  </Button>
+                  <Button variant="ghost" size="sm">Log In</Button>
                 </Link>
                 <Link to="/app">
-                  <Button variant="gradient" size="sm" className="w-full">
-                    Start Free
-                  </Button>
+                  <Button variant="gradient" size="sm" className="w-full">Start Free</Button>
                 </Link>
               </div>
             </div>
