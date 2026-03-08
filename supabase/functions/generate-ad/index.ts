@@ -10,14 +10,15 @@ const corsHeaders = {
 };
 
 // Rate limiting configuration
-const RATE_LIMIT_MAX_REQUESTS = 50; // Max requests per window
-const RATE_LIMIT_WINDOW_MINUTES = 60; // Time window in minutes
+const RATE_LIMIT_MAX_REQUESTS = 50;
+const RATE_LIMIT_WINDOW_MINUTES = 60;
 
 interface AdRequest {
   input: string;
   inputType: "image" | "url" | "description";
   styleId: string;
   styleName: string;
+  language: string;
 }
 
 interface RateLimitResult {
@@ -30,11 +31,23 @@ interface RateLimitResult {
 const MAX_INPUT_LENGTH = 10000;
 const MAX_STYLE_ID_LENGTH = 50;
 const MAX_STYLE_NAME_LENGTH = 100;
-const MAX_AI_FIELD_LENGTH = 5000; // Max length for AI-generated fields
+const MAX_AI_FIELD_LENGTH = 5000;
 const VALID_INPUT_TYPES = ["image", "url", "description"] as const;
 const VALID_STYLE_IDS = ["simple", "emotional", "storytelling", "viral", "short-form"] as const;
+const VALID_LANGUAGES = [
+  "auto", "en", "es", "fr", "de", "pt", "it", "nl", "ar", "hi",
+  "ja", "zh", "ko", "ru", "tr", "he", "ur", "fa", "th", "vi", "id"
+] as const;
 
-// Sanitize AI-generated content to prevent XSS
+const LANGUAGE_NAMES: Record<string, string> = {
+  auto: "the same language as the user input",
+  en: "English", es: "Spanish", fr: "French", de: "German",
+  pt: "Portuguese", it: "Italian", nl: "Dutch", ar: "Arabic",
+  hi: "Hindi", ja: "Japanese", zh: "Chinese (Simplified)", ko: "Korean",
+  ru: "Russian", tr: "Turkish", he: "Hebrew", ur: "Urdu",
+  fa: "Persian (Farsi)", th: "Thai", vi: "Vietnamese", id: "Indonesian",
+};
+
 function sanitizeAIContent(content: string): string {
   if (typeof content !== 'string') return '';
   return content
@@ -46,7 +59,6 @@ function sanitizeAIContent(content: string): string {
     .substring(0, MAX_AI_FIELD_LENGTH);
 }
 
-// Validate and sanitize AI response structure
 function validateAIResponse(content: unknown): { 
   valid: true; 
   data: { 
@@ -64,7 +76,6 @@ function validateAIResponse(content: unknown): {
 
   const obj = content as Record<string, unknown>;
   
-  // Validate required fields exist
   const requiredFields = ['headline', 'bodyShort', 'bodyLong', 'hashtags', 'cta', 'targetAudience'];
   for (const field of requiredFields) {
     if (!(field in obj)) {
@@ -72,14 +83,13 @@ function validateAIResponse(content: unknown): {
     }
   }
 
-  // Validate and sanitize hashtags array
   if (!Array.isArray(obj.hashtags)) {
     return { valid: false, error: 'hashtags must be an array' };
   }
   const sanitizedHashtags = obj.hashtags
     .filter((tag): tag is string => typeof tag === 'string')
-    .slice(0, 10) // Limit to 10 hashtags
-    .map(tag => sanitizeAIContent(tag.substring(0, 100))); // Limit hashtag length
+    .slice(0, 10)
+    .map(tag => sanitizeAIContent(tag.substring(0, 100)));
 
   return {
     valid: true,
@@ -94,7 +104,6 @@ function validateAIResponse(content: unknown): {
   };
 }
 
-// Map internal errors to safe user-facing messages
 function getSafeErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
@@ -106,15 +115,13 @@ function getSafeErrorMessage(error: unknown): string {
   return 'An error occurred while generating your ad. Please try again.';
 }
 
-// Sanitize string input - remove potential injection patterns
 function sanitizeInput(input: string): string {
   return input
     .trim()
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     .substring(0, MAX_INPUT_LENGTH);
 }
 
-// Validate URL format
 function isValidUrl(str: string): boolean {
   try {
     const url = new URL(str);
@@ -124,15 +131,13 @@ function isValidUrl(str: string): boolean {
   }
 }
 
-// Validate the request payload
 function validateRequest(body: unknown): { valid: true; data: AdRequest } | { valid: false; error: string } {
   if (!body || typeof body !== 'object') {
     return { valid: false, error: "Invalid request body" };
   }
 
-  const { input, inputType, styleId, styleName } = body as Record<string, unknown>;
+  const { input, inputType, styleId, styleName, language } = body as Record<string, unknown>;
 
-  // Validate input
   if (typeof input !== 'string' || input.trim().length === 0) {
     return { valid: false, error: "Input is required and must be a non-empty string" };
   }
@@ -140,17 +145,14 @@ function validateRequest(body: unknown): { valid: true; data: AdRequest } | { va
     return { valid: false, error: `Input exceeds maximum length of ${MAX_INPUT_LENGTH} characters` };
   }
 
-  // Validate inputType
   if (!VALID_INPUT_TYPES.includes(inputType as typeof VALID_INPUT_TYPES[number])) {
     return { valid: false, error: `Invalid input type. Must be one of: ${VALID_INPUT_TYPES.join(', ')}` };
   }
 
-  // Validate URL if inputType is "url"
   if (inputType === "url" && !isValidUrl(input)) {
     return { valid: false, error: "Invalid URL format. Must be a valid HTTP or HTTPS URL" };
   }
 
-  // Validate styleId
   if (typeof styleId !== 'string' || styleId.length > MAX_STYLE_ID_LENGTH) {
     return { valid: false, error: "Invalid style ID" };
   }
@@ -158,9 +160,14 @@ function validateRequest(body: unknown): { valid: true; data: AdRequest } | { va
     return { valid: false, error: `Invalid style ID. Must be one of: ${VALID_STYLE_IDS.join(', ')}` };
   }
 
-  // Validate styleName
   if (typeof styleName !== 'string' || styleName.length === 0 || styleName.length > MAX_STYLE_NAME_LENGTH) {
     return { valid: false, error: "Invalid style name" };
+  }
+
+  // Validate language - default to "auto" if not provided
+  const lang = typeof language === 'string' ? language : 'auto';
+  if (!VALID_LANGUAGES.includes(lang as typeof VALID_LANGUAGES[number])) {
+    return { valid: false, error: "Invalid language selection" };
   }
 
   return {
@@ -170,6 +177,7 @@ function validateRequest(body: unknown): { valid: true; data: AdRequest } | { va
       inputType: inputType as AdRequest['inputType'],
       styleId: styleId,
       styleName: styleName.trim().substring(0, MAX_STYLE_NAME_LENGTH),
+      language: lang,
     }
   };
 }
@@ -180,7 +188,6 @@ serve(async (req) => {
   }
 
   try {
-    // Extract user ID from the authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -189,12 +196,10 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client with service role for rate limiting
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify the user's JWT and get user ID
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
@@ -205,7 +210,6 @@ serve(async (req) => {
       );
     }
 
-    // Check rate limit
     const { data: rateLimitData, error: rateLimitError } = await supabase
       .rpc("check_rate_limit", {
         p_user_id: user.id,
@@ -215,7 +219,6 @@ serve(async (req) => {
       });
 
     if (rateLimitError) {
-      // Fail closed - deny request if rate limiting system is unavailable
       return new Response(
         JSON.stringify({ error: "Service temporarily unavailable. Please try again." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -247,7 +250,6 @@ serve(async (req) => {
 
     const body = await req.json();
     
-    // Validate and sanitize input
     const validation = validateRequest(body);
     if (!validation.valid) {
       return new Response(
@@ -256,14 +258,23 @@ serve(async (req) => {
       );
     }
 
-    const { input, inputType, styleId, styleName } = validation.data;
+    const { input, inputType, styleId, styleName, language } = validation.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert advertising copywriter. Generate high-converting ad copy based on the user's input. Your response must be valid JSON with this exact structure:
+    const languageName = LANGUAGE_NAMES[language] || "the same language as the user input";
+    const languageInstruction = language === "auto"
+      ? `Detect the language of the user's input and generate ALL ad copy in that same language. If the input language is unclear, default to English.`
+      : `Generate ALL ad copy strictly in ${languageName}. This includes the headline, body copy, hashtags, CTA, and target audience description. Do NOT mix languages.`;
+
+    const systemPrompt = `You are an expert multilingual advertising copywriter. Generate high-converting ad copy based on the user's input.
+
+LANGUAGE INSTRUCTION: ${languageInstruction}
+
+Your response must be valid JSON with this exact structure:
 {
   "headline": "A compelling headline under 60 characters",
   "bodyShort": "Short ad copy, 1-2 sentences, punchy and engaging",
@@ -273,8 +284,10 @@ serve(async (req) => {
   "targetAudience": "Description of ideal target audience for this ad"
 }
 
+IMPORTANT: All hashtags must be in the target language and culturally relevant to that market. Do not use English hashtags unless the target language is English.
+
 Style guidelines for "${styleName}" style:
-${getStyleGuidelines(styleId)}
+${getStyleGuidelines(styleId, language)}
 
 Respond ONLY with valid JSON. No markdown, no explanations.`;
 
@@ -338,17 +351,14 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
       throw new Error("No content in AI response");
     }
 
-    // Parse the JSON response
     let parsedContent;
     try {
-      // Clean the response - remove markdown code blocks if present
       const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       parsedContent = JSON.parse(cleanContent);
     } catch {
       throw new Error("Failed to parse AI response as JSON");
     }
 
-    // Validate and sanitize AI response to prevent XSS
     const aiValidation = validateAIResponse(parsedContent);
     if (!aiValidation.valid) {
       throw new Error("AI response validation failed");
@@ -356,7 +366,6 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
 
     const adContent = aiValidation.data;
 
-    // Generate placeholder images (in future, could use image generation)
     const images = [
       "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop",
       "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
@@ -373,6 +382,7 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
       targetAudience: adContent.targetAudience || sanitizeAIContent("General audience"),
       images,
       style: styleName,
+      language,
       createdAt: new Date().toISOString(),
       input: {
         type: inputType,
@@ -384,7 +394,6 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    // Return sanitized error message to prevent information leakage
     return new Response(
       JSON.stringify({ error: getSafeErrorMessage(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -392,7 +401,9 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
   }
 });
 
-function getStyleGuidelines(styleId: string): string {
+function getStyleGuidelines(styleId: string, language: string): string {
+  const isNonEnglish = language !== "en" && language !== "auto";
+  
   const guidelines: Record<string, string> = {
     simple: `
 - Direct and clear messaging
@@ -414,7 +425,7 @@ function getStyleGuidelines(styleId: string): string {
 - Invite the reader to be part of the story`,
     viral: `
 - Trendy, attention-grabbing language
-- Use Gen-Z/millennial slang appropriately
+- ${isNonEnglish ? "Use culturally relevant slang and trends for the target language" : "Use Gen-Z/millennial slang appropriately"}
 - Create FOMO (fear of missing out)
 - Punchy, energetic phrases
 - Heavy use of emojis and casual tone`,

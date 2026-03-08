@@ -1,0 +1,1 @@
+ALTER TABLE public.ad_history ADD COLUMN language text NOT NULL DEFAULT 'auto';

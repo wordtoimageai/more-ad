@@ -35,11 +35,12 @@ export default function AppPage() {
   const handleGenerate = async (
     input: string,
     inputType: "image" | "url" | "description",
-    styleId: string
+    styleId: string,
+    language: string
   ) => {
     setIsGenerating(true);
     try {
-      const ad = await generateAd(input, inputType, styleId);
+      const ad = await generateAd(input, inputType, styleId, language);
       
       // Save to cloud and get the DB-generated UUID
       const dbId = await saveAdToCloud(ad);

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const generateAd = async (
   input: string,
   inputType: "image" | "url" | "description",
-  styleId: string
+  styleId: string,
+  language: string = "auto"
 ): Promise<GeneratedAd> => {
   const style = AD_STYLES.find((s) => s.id === styleId) || AD_STYLES[0];
 
@@ -14,6 +15,7 @@ export const generateAd = async (
       inputType,
       styleId,
       styleName: style.name,
+      language,
     },
   });
 
@@ -36,6 +38,7 @@ export const generateAd = async (
     targetAudience: data.targetAudience,
     images: data.images,
     style: data.style,
+    language: data.language || language,
     createdAt: new Date(data.createdAt),
     input: {
       type: data.input.type,

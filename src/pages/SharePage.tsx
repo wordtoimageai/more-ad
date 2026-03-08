@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { GeneratedAd } from "@/types/ad";
+import { GeneratedAd, RTL_LANGUAGES } from "@/types/ad";
 import { Loader2, Hash, Target, Megaphone, ImageIcon, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
@@ -59,6 +59,8 @@ const SharePage = () => {
         return;
       }
 
+      const adData = data as any;
+      const adLanguage = adData.language || "auto";
       setAd({
         id: data.id,
         headline: data.headline,
@@ -69,6 +71,7 @@ const SharePage = () => {
         targetAudience: data.target_audience,
         images: data.images,
         style: data.style,
+        language: adLanguage,
         createdAt: new Date(data.created_at),
         input: {
           type: data.input_type as "image" | "url" | "description",
@@ -135,6 +138,7 @@ const SharePage = () => {
       <main className="container mx-auto px-4 py-8 max-w-2xl">
         <motion.div
           className="space-y-6"
+          dir={ad.language && RTL_LANGUAGES.includes(ad.language) ? "rtl" : "ltr"}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
