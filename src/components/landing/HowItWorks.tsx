@@ -23,8 +23,27 @@ const steps = [
 ];
 
 const HowItWorks = () => {
+  useEffect(() => {
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      name: "How to Create AI-Powered Ads with More.ad",
+      step: steps.map((s, i) => ({
+        "@type": "HowToStep",
+        position: i + 1,
+        name: s.title,
+        text: s.description,
+      })),
+    };
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "howto-schema";
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+    return () => { document.getElementById("howto-schema")?.remove(); };
+  }, []);
+
   return (
-    <section className="py-24 relative" id="how-it-works">
       <div className="container px-4">
         <motion.div 
           className="text-center mb-16"
