@@ -16,7 +16,7 @@ import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 
 export default function AppPage() {
-  useDocumentMeta({ title: "Create Ad | More.ad", description: "Generate high-converting ad copy with AI. Describe your product and get instant headlines, body copy, and CTAs." });
+  useDocumentMeta({ title: "Create Ad | More.ad", description: "Generate high-converting ad copy with AI. Describe your product and get instant headlines, body copy, and CTAs.", ogUrl: "https://more-ad.lovable.app/app" });
   const navigate = useNavigate();
   const { user, isLoading: authLoading, signOut, isAuthenticated } = useAuth();
   const [currentAd, setCurrentAd] = useState<GeneratedAd | null>(null);

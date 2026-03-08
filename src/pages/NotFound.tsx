@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 
 const NotFound = () => {
-  useDocumentMeta({ title: "Page Not Found | More.ad" });
+  useDocumentMeta({ title: "Page Not Found | More.ad", description: "The page you're looking for doesn't exist." });
   const location = useLocation();
 
   useEffect(() => {
