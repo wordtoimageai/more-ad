@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { SUPPORTED_LANGUAGES } from "@/types/ad";
 import { X, Trash2, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -126,6 +127,14 @@ export default function AdHistory({ onSelectAd, isOpen, onClose }: AdHistoryProp
                             {ad.bodyShort}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
+                            {ad.language && ad.language !== "auto" && (() => {
+                              const lang = SUPPORTED_LANGUAGES.find(l => l.id === ad.language);
+                              return lang ? (
+                                <span className="text-xs px-2 py-1 rounded-full bg-accent/50 text-accent-foreground">
+                                  {lang.flag} {lang.name}
+                                </span>
+                              ) : null;
+                            })()}
                             <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
                               {ad.style}
                             </span>
