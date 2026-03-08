@@ -24,11 +24,10 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     // Check if we have a valid recovery session
-    supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsValidSession(true);
       } else if (session) {
-        // User is already logged in, redirect to app
         navigate("/app");
       }
     });
@@ -45,6 +44,8 @@ export default function ResetPasswordPage() {
         }
       }
     });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const validateForm = (): boolean => {

@@ -117,15 +117,27 @@ const Pricing = () => {
                 ))}
               </ul>
 
-              <Link to="/app">
-                <Button 
-                  variant={plan.popular ? "gradient" : "outline"} 
-                  className="w-full"
-                  size="lg"
-                >
-                  {plan.cta}
-                </Button>
-              </Link>
+              {plan.cta === "Contact Sales" ? (
+                <a href="mailto:sales@more-ad.lovable.app">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    size="lg"
+                  >
+                    {plan.cta}
+                  </Button>
+                </a>
+              ) : (
+                <Link to="/app">
+                  <Button 
+                    variant={plan.popular ? "gradient" : "outline"} 
+                    className="w-full"
+                    size="lg"
+                  >
+                    {plan.cta}
+                  </Button>
+                </Link>
+              )}
             </motion.div>
           ))}
         </div>

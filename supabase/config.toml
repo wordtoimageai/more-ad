@@ -1,4 +1,7 @@
 project_id = "uemsufqwlzdlsyjktuss"
 
 [functions.generate-ad]
-verify_jwt = true
+verify_jwt = false
+
+[functions.og-share]
+verify_jwt = false

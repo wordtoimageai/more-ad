@@ -217,6 +217,7 @@ const SharePage = () => {
                     <img
                       src={image}
                       alt={`Creative ${index + 1}`}
+                      loading="lazy"
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     />
                   </div>

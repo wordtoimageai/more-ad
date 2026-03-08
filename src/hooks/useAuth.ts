@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { clearHistory } from "@/lib/storage";
+
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -15,9 +15,8 @@ export function useAuth() {
         setUser(session?.user ?? null);
         setIsLoading(false);
         
-        // Clear localStorage on sign out for security
         if (event === 'SIGNED_OUT') {
-          clearHistory();
+          localStorage.removeItem("moread_history");
         }
       }
     );
@@ -32,8 +31,7 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
-    // Clear localStorage before signing out
-    clearHistory();
+    localStorage.removeItem("moread_history");
     await supabase.auth.signOut();
   };
 
