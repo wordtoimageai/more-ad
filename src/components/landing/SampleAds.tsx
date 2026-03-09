@@ -89,7 +89,7 @@ const SampleAds = () => {
         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {sampleAds.map((ad, index) => (
             <motion.div
-              key={ad.platform}
+              key={`${ad.platform}-${index}`}
               className="glass gradient-border rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
