@@ -14,6 +14,7 @@ export interface GeneratedAd {
   cta: string;
   targetAudience: string;
   images: string[];
+  videoUrl?: string | null;
   style: string;
   language: string;
   createdAt: Date;

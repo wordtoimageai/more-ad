@@ -9,7 +9,6 @@ const corsHeaders = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
 };
 
-// Rate limiting configuration
 const RATE_LIMIT_MAX_REQUESTS = 50;
 const RATE_LIMIT_WINDOW_MINUTES = 60;
 
@@ -27,7 +26,6 @@ interface RateLimitResult {
   reset_at: string;
 }
 
-// Input validation constants
 const MAX_INPUT_LENGTH = 10000;
 const MAX_STYLE_ID_LENGTH = 50;
 const MAX_STYLE_NAME_LENGTH = 100;
@@ -62,35 +60,23 @@ function sanitizeAIContent(content: string): string {
 function validateAIResponse(content: unknown): { 
   valid: true; 
   data: { 
-    headline: string; 
-    bodyShort: string; 
-    bodyLong: string; 
-    hashtags: string[]; 
-    cta: string; 
-    targetAudience: string; 
+    headline: string; bodyShort: string; bodyLong: string; 
+    hashtags: string[]; cta: string; targetAudience: string; 
   } 
 } | { valid: false; error: string } {
   if (!content || typeof content !== 'object') {
     return { valid: false, error: 'Invalid AI response structure' };
   }
-
   const obj = content as Record<string, unknown>;
-  
   const requiredFields = ['headline', 'bodyShort', 'bodyLong', 'hashtags', 'cta', 'targetAudience'];
   for (const field of requiredFields) {
-    if (!(field in obj)) {
-      return { valid: false, error: `Missing required field: ${field}` };
-    }
+    if (!(field in obj)) return { valid: false, error: `Missing required field: ${field}` };
   }
-
-  if (!Array.isArray(obj.hashtags)) {
-    return { valid: false, error: 'hashtags must be an array' };
-  }
+  if (!Array.isArray(obj.hashtags)) return { valid: false, error: 'hashtags must be an array' };
   const sanitizedHashtags = obj.hashtags
     .filter((tag): tag is string => typeof tag === 'string')
     .slice(0, 10)
     .map(tag => sanitizeAIContent(tag.substring(0, 100)));
-
   return {
     valid: true,
     data: {
@@ -116,60 +102,27 @@ function getSafeErrorMessage(error: unknown): string {
 }
 
 function sanitizeInput(input: string): string {
-  return input
-    .trim()
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-    .substring(0, MAX_INPUT_LENGTH);
+  return input.trim().replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').substring(0, MAX_INPUT_LENGTH);
 }
 
 function isValidUrl(str: string): boolean {
   try {
     const url = new URL(str);
     return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
 function validateRequest(body: unknown): { valid: true; data: AdRequest } | { valid: false; error: string } {
-  if (!body || typeof body !== 'object') {
-    return { valid: false, error: "Invalid request body" };
-  }
-
+  if (!body || typeof body !== 'object') return { valid: false, error: "Invalid request body" };
   const { input, inputType, styleId, styleName, language } = body as Record<string, unknown>;
-
-  if (typeof input !== 'string' || input.trim().length === 0) {
-    return { valid: false, error: "Input is required and must be a non-empty string" };
-  }
-  if (input.length > MAX_INPUT_LENGTH) {
-    return { valid: false, error: `Input exceeds maximum length of ${MAX_INPUT_LENGTH} characters` };
-  }
-
-  if (!VALID_INPUT_TYPES.includes(inputType as typeof VALID_INPUT_TYPES[number])) {
-    return { valid: false, error: `Invalid input type. Must be one of: ${VALID_INPUT_TYPES.join(', ')}` };
-  }
-
-  if (inputType === "url" && !isValidUrl(input)) {
-    return { valid: false, error: "Invalid URL format. Must be a valid HTTP or HTTPS URL" };
-  }
-
-  if (typeof styleId !== 'string' || styleId.length > MAX_STYLE_ID_LENGTH) {
-    return { valid: false, error: "Invalid style ID" };
-  }
-  if (!VALID_STYLE_IDS.includes(styleId as typeof VALID_STYLE_IDS[number])) {
-    return { valid: false, error: `Invalid style ID. Must be one of: ${VALID_STYLE_IDS.join(', ')}` };
-  }
-
-  if (typeof styleName !== 'string' || styleName.length === 0 || styleName.length > MAX_STYLE_NAME_LENGTH) {
-    return { valid: false, error: "Invalid style name" };
-  }
-
-  // Validate language - default to "auto" if not provided
+  if (typeof input !== 'string' || input.trim().length === 0) return { valid: false, error: "Input is required" };
+  if (input.length > MAX_INPUT_LENGTH) return { valid: false, error: `Input exceeds maximum length` };
+  if (!VALID_INPUT_TYPES.includes(inputType as typeof VALID_INPUT_TYPES[number])) return { valid: false, error: "Invalid input type" };
+  if (inputType === "url" && !isValidUrl(input)) return { valid: false, error: "Invalid URL format" };
+  if (typeof styleId !== 'string' || !VALID_STYLE_IDS.includes(styleId as typeof VALID_STYLE_IDS[number])) return { valid: false, error: "Invalid style ID" };
+  if (typeof styleName !== 'string' || styleName.length === 0 || styleName.length > MAX_STYLE_NAME_LENGTH) return { valid: false, error: "Invalid style name" };
   const lang = typeof language === 'string' ? language : 'auto';
-  if (!VALID_LANGUAGES.includes(lang as typeof VALID_LANGUAGES[number])) {
-    return { valid: false, error: "Invalid language selection" };
-  }
-
+  if (!VALID_LANGUAGES.includes(lang as typeof VALID_LANGUAGES[number])) return { valid: false, error: "Invalid language" };
   return {
     valid: true,
     data: {
@@ -182,6 +135,116 @@ function validateRequest(body: unknown): { valid: true; data: AdRequest } | { va
   };
 }
 
+// --- Replicate helpers ---
+
+async function callReplicate(modelVersion: string, input: Record<string, unknown>, apiToken: string): Promise<unknown> {
+  // Create prediction
+  const createRes = await fetch("https://api.replicate.com/v1/predictions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ version: modelVersion, input }),
+  });
+
+  if (!createRes.ok) {
+    const errBody = await createRes.text();
+    throw new Error(`Replicate create failed [${createRes.status}]: ${errBody}`);
+  }
+
+  let prediction = await createRes.json();
+
+  // Poll for completion (max 120s)
+  const maxWait = 120_000;
+  const start = Date.now();
+  while (prediction.status !== "succeeded" && prediction.status !== "failed" && prediction.status !== "canceled") {
+    if (Date.now() - start > maxWait) throw new Error("Replicate prediction timed out");
+    await new Promise(r => setTimeout(r, 2000));
+    const pollRes = await fetch(prediction.urls.get, {
+      headers: { "Authorization": `Bearer ${apiToken}` },
+    });
+    prediction = await pollRes.json();
+  }
+
+  if (prediction.status !== "succeeded") {
+    throw new Error(`Replicate prediction failed: ${prediction.error || "unknown error"}`);
+  }
+
+  return prediction.output;
+}
+
+async function generateImageWithReplicate(prompt: string, apiToken: string): Promise<string[]> {
+  try {
+    // Using FLUX Schnell model for fast image generation
+    const output = await callReplicate(
+      "black-forest-labs/flux-schnell",
+      {
+        prompt: `Professional advertising creative: ${prompt}`,
+        num_outputs: 3,
+        aspect_ratio: "1:1",
+        output_format: "webp",
+        output_quality: 90,
+      },
+      apiToken,
+    );
+    if (Array.isArray(output) && output.length > 0) {
+      return output.map((url: unknown) => String(url));
+    }
+    return [];
+  } catch (err) {
+    console.error("Replicate image generation failed:", err);
+    return [];
+  }
+}
+
+async function generateVideoWithReplicate(prompt: string, apiToken: string): Promise<string | null> {
+  try {
+    // Using minimax/video-01 for video generation
+    const output = await callReplicate(
+      "minimax/video-01",
+      {
+        prompt: `Professional advertising video: ${prompt}. Short, engaging, high quality.`,
+      },
+      apiToken,
+    );
+    if (typeof output === "string") return output;
+    if (Array.isArray(output) && output.length > 0) return String(output[0]);
+    return null;
+  } catch (err) {
+    console.error("Replicate video generation failed:", err);
+    return null;
+  }
+}
+
+async function generateTextWithReplicate(systemPrompt: string, userPrompt: string, apiToken: string): Promise<string> {
+  // Using Meta Llama 3 for text generation
+  const output = await callReplicate(
+    "meta/meta-llama-3-70b-instruct",
+    {
+      prompt: `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n${systemPrompt}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n${userPrompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n`,
+      max_tokens: 2048,
+      temperature: 0.7,
+    },
+    apiToken,
+  );
+  if (Array.isArray(output)) return output.join("");
+  if (typeof output === "string") return output;
+  throw new Error("Unexpected Replicate text output format");
+}
+
+function getStyleGuidelines(styleId: string, language: string): string {
+  const isNonEnglish = language !== "en" && language !== "auto";
+  const guidelines: Record<string, string> = {
+    simple: `- Direct and clear messaging\n- Focus on value proposition\n- Professional tone\n- Minimal emojis\n- Straightforward call-to-action`,
+    emotional: `- Connect on an emotional level\n- Use heartfelt language\n- Create a sense of care and belonging\n- Use warm, inviting words\n- Include appropriate emojis`,
+    storytelling: `- Create a narrative arc\n- Share the journey or origin story\n- Build connection through story\n- Use descriptive, evocative language\n- Invite the reader to be part of the story`,
+    viral: `- Trendy, attention-grabbing language\n- ${isNonEnglish ? "Use culturally relevant slang" : "Use Gen-Z/millennial slang appropriately"}\n- Create FOMO\n- Punchy, energetic phrases\n- Heavy use of emojis and casual tone`,
+    "short-form": `- Ultra-concise messaging\n- Punchy one-liners\n- Action-oriented\n- Minimal words, maximum impact\n- Perfect for social media feeds`,
+  };
+  return guidelines[styleId] || guidelines.simple;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -190,10 +253,8 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Authorization header required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -202,73 +263,47 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid authentication token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Invalid authentication token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Rate limiting
     const { data: rateLimitData, error: rateLimitError } = await supabase
       .rpc("check_rate_limit", {
-        p_user_id: user.id,
-        p_endpoint: "generate-ad",
-        p_max_requests: RATE_LIMIT_MAX_REQUESTS,
-        p_window_minutes: RATE_LIMIT_WINDOW_MINUTES,
+        p_user_id: user.id, p_endpoint: "generate-ad",
+        p_max_requests: RATE_LIMIT_MAX_REQUESTS, p_window_minutes: RATE_LIMIT_WINDOW_MINUTES,
       });
-
     if (rateLimitError) {
-      return new Response(
-        JSON.stringify({ error: "Service temporarily unavailable. Please try again." }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Service temporarily unavailable." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    
     if (rateLimitData && rateLimitData.length > 0) {
       const rateLimit = rateLimitData[0] as RateLimitResult;
-      
       if (!rateLimit.allowed) {
-        return new Response(
-          JSON.stringify({ 
-            error: "Rate limit exceeded. Please try again later.",
-            retryAfter: rateLimit.reset_at
-          }),
-          { 
-            status: 429, 
-            headers: { 
-              ...corsHeaders, 
-              "Content-Type": "application/json",
-              "X-RateLimit-Limit": String(RATE_LIMIT_MAX_REQUESTS),
-              "X-RateLimit-Remaining": "0",
-              "X-RateLimit-Reset": rateLimit.reset_at,
-            } 
-          }
-        );
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later.", retryAfter: rateLimit.reset_at }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 
     const body = await req.json();
-    
     const validation = validateRequest(body);
     if (!validation.valid) {
-      return new Response(
-        JSON.stringify({ error: validation.error }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const { input, inputType, styleId, styleName, language } = validation.data;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
+    if (!REPLICATE_API_TOKEN) {
+      throw new Error("REPLICATE_API_TOKEN is not configured");
     }
 
     const languageName = LANGUAGE_NAMES[language] || "the same language as the user input";
     const languageInstruction = language === "auto"
-      ? `Detect the language of the user's input and generate ALL ad copy in that same language. If the input language is unclear, default to English.`
-      : `Generate ALL ad copy strictly in ${languageName}. This includes the headline, body copy, hashtags, CTA, and target audience description. Do NOT mix languages.`;
+      ? `Detect the language of the user's input and generate ALL ad copy in that same language. If unclear, default to English.`
+      : `Generate ALL ad copy strictly in ${languageName}. Do NOT mix languages.`;
 
     const systemPrompt = `You are an expert multilingual advertising copywriter. Generate high-converting ad copy based on the user's input.
 
@@ -281,92 +316,49 @@ Your response must be valid JSON with this exact structure:
   "bodyLong": "Longer ad copy, 3-4 sentences, persuasive and detailed",
   "hashtags": ["#Hashtag1", "#Hashtag2", "#Hashtag3", "#Hashtag4", "#Hashtag5"],
   "cta": "Call to action button text (2-4 words)",
-  "targetAudience": "Description of ideal target audience for this ad"
+  "targetAudience": "Description of ideal target audience for this ad",
+  "imagePrompt": "A detailed prompt to generate an advertising image for this product"
 }
 
-IMPORTANT: All hashtags must be in the target language and culturally relevant to that market. Do not use English hashtags unless the target language is English.
+IMPORTANT: All hashtags must be in the target language. The imagePrompt should be in English and describe a professional advertising visual.
 
 Style guidelines for "${styleName}" style:
 ${getStyleGuidelines(styleId, language)}
 
 Respond ONLY with valid JSON. No markdown, no explanations.`;
 
-    const userPrompt = `Create ad copy for the following ${inputType}:
-${input}
+    const userPrompt = `Create ad copy for the following ${inputType}:\n${input}\n\nGenerate compelling, ${styleName.toLowerCase()}-style advertising content.`;
 
-Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
-    
-    let response: Response;
-    try {
-      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-        }),
-        signal: controller.signal,
-      });
-    } catch (err) {
-      clearTimeout(timeout);
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        return new Response(
-          JSON.stringify({ error: "Request timed out. Please try again." }),
-          { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw err;
-    }
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Usage limit reached. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-    
-    if (!content) {
-      throw new Error("No content in AI response");
-    }
+    // Generate text with Replicate
+    const textOutput = await generateTextWithReplicate(systemPrompt, userPrompt, REPLICATE_API_TOKEN);
 
     let parsedContent;
     try {
-      const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      parsedContent = JSON.parse(cleanContent);
+      const cleanContent = textOutput.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      // Find the JSON object in the output
+      const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("No JSON found");
+      parsedContent = JSON.parse(jsonMatch[0]);
     } catch {
       throw new Error("Failed to parse AI response as JSON");
     }
 
     const aiValidation = validateAIResponse(parsedContent);
-    if (!aiValidation.valid) {
-      throw new Error("AI response validation failed");
-    }
+    if (!aiValidation.valid) throw new Error("AI response validation failed");
 
     const adContent = aiValidation.data;
+    const imagePrompt = typeof parsedContent.imagePrompt === 'string' 
+      ? parsedContent.imagePrompt 
+      : `Professional ad creative for: ${adContent.headline}`;
 
-    const images = [
+    // Generate images and video in parallel with Replicate
+    const [images, videoUrl] = await Promise.all([
+      generateImageWithReplicate(imagePrompt, REPLICATE_API_TOKEN),
+      generateVideoWithReplicate(imagePrompt, REPLICATE_API_TOKEN),
+    ]);
+
+    // Fallback images if Replicate fails
+    const finalImages = images.length > 0 ? images : [
       "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop",
       "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
       "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
@@ -380,62 +372,19 @@ Generate compelling, ${styleName.toLowerCase()}-style advertising content.`;
       hashtags: adContent.hashtags.length > 0 ? adContent.hashtags : ["#Product", "#Sale", "#Shop"],
       cta: adContent.cta || sanitizeAIContent("Shop Now"),
       targetAudience: adContent.targetAudience || sanitizeAIContent("General audience"),
-      images,
+      images: finalImages,
+      videoUrl,
       style: styleName,
       language,
       createdAt: new Date().toISOString(),
-      input: {
-        type: inputType,
-        value: input,
-      },
+      input: { type: inputType, value: input },
     };
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: getSafeErrorMessage(error) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: getSafeErrorMessage(error) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
-
-function getStyleGuidelines(styleId: string, language: string): string {
-  const isNonEnglish = language !== "en" && language !== "auto";
-  
-  const guidelines: Record<string, string> = {
-    simple: `
-- Direct and clear messaging
-- Focus on value proposition
-- Professional tone
-- Minimal emojis
-- Straightforward call-to-action`,
-    emotional: `
-- Connect on an emotional level
-- Use heartfelt language
-- Create a sense of care and belonging
-- Use warm, inviting words
-- Include appropriate emojis (hearts, stars)`,
-    storytelling: `
-- Create a narrative arc
-- Share the journey or origin story
-- Build connection through story
-- Use descriptive, evocative language
-- Invite the reader to be part of the story`,
-    viral: `
-- Trendy, attention-grabbing language
-- ${isNonEnglish ? "Use culturally relevant slang and trends for the target language" : "Use Gen-Z/millennial slang appropriately"}
-- Create FOMO (fear of missing out)
-- Punchy, energetic phrases
-- Heavy use of emojis and casual tone`,
-    "short-form": `
-- Ultra-concise messaging
-- Punchy one-liners
-- Action-oriented
-- Minimal words, maximum impact
-- Perfect for social media feeds`,
-  };
-
-  return guidelines[styleId] || guidelines.simple;
-}
