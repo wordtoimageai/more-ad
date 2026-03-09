@@ -158,7 +158,7 @@ export default function AppPage() {
               </span>
               Generated Ad
             </h2>
-            <AdOutput ad={currentAd} isGenerating={isGenerating} onAdUpdate={setCurrentAd} />
+            <AdOutput ad={currentAd} isGenerating={isGenerating} onAdUpdate={setCurrentAd} onRegenerate={lastInput ? handleRegenerate : undefined} />
           </motion.div>
         </div>
       </main>
