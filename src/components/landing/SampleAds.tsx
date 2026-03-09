@@ -73,8 +73,13 @@ const SampleAds = () => {
               </div>
 
               {/* Ad Image Placeholder */}
-              <div className="aspect-square bg-gradient-to-br from-muted to-card flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full gradient-bg opacity-50 animate-pulse-slow" />
+              <div className="aspect-square overflow-hidden">
+                <img 
+                  src={ad.image} 
+                  alt={`${ad.platform} ad example - ${ad.headline}`}
+                  loading="lazy"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
               </div>
 
               {/* Ad Content */}
