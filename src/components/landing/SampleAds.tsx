@@ -3,6 +3,9 @@ import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import sampleCoffee from "@/assets/sample-ad-coffee.jpg";
 import sampleSkincare from "@/assets/sample-ad-skincare.jpg";
 import sampleKitchen from "@/assets/sample-ad-kitchen.jpg";
+import sampleHeadphones from "@/assets/sample-ad-headphones.jpg";
+import sampleFitness from "@/assets/sample-ad-fitness.jpg";
+import sampleTravel from "@/assets/sample-ad-travel.jpg";
 
 const sampleAds = [
   {
@@ -32,6 +35,33 @@ const sampleAds = [
     image: sampleKitchen,
     engagement: { likes: "8.7K", comments: "645" },
   },
+  {
+    platform: "YouTube",
+    headline: "Sound That Moves You 🎧",
+    body: "40-hour battery. Active noise cancellation. Premium wireless audio that audiophiles are raving about.",
+    hashtags: "#TechReview #Headphones #AudioGear",
+    cta: "Pre-Order",
+    image: sampleHeadphones,
+    engagement: { likes: "23.1K", comments: "1.4K" },
+  },
+  {
+    platform: "Instagram",
+    headline: "Fuel Your Goals 💪",
+    body: "Clean protein. Zero compromise. Join 100K+ athletes who trust us for their daily nutrition.",
+    hashtags: "#FitnessJourney #GymLife #HealthyLiving",
+    cta: "Get Started",
+    image: sampleFitness,
+    engagement: { likes: "31.8K", comments: "2.3K" },
+  },
+  {
+    platform: "Facebook",
+    headline: "Paradise Found 🌴",
+    body: "Exclusive beachfront villas. Private infinity pools. Your dream escape is just one click away.",
+    hashtags: "#TravelGoals #LuxuryTravel #VacationMode",
+    cta: "Book Now",
+    image: sampleTravel,
+    engagement: { likes: "56.2K", comments: "3.8K" },
+  },
 ];
 
 const SampleAds = () => {
@@ -59,7 +89,7 @@ const SampleAds = () => {
         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {sampleAds.map((ad, index) => (
             <motion.div
-              key={ad.platform}
+              key={`${ad.platform}-${index}`}
               className="glass gradient-border rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
