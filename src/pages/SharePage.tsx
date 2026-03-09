@@ -83,7 +83,7 @@ const SharePage = () => {
       updateMetaTags({
         title: `${data.headline} | More.ad`,
         description: data.body_short,
-        image: data.images?.[0] || "https://more-ad.lovable.app/favicon.png",
+        image: data.images?.[0] || "https://more.ad/favicon.png",
         url: `${window.location.origin}/share/${shareToken}`,
       });
 

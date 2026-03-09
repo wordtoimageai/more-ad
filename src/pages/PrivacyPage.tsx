@@ -17,7 +17,7 @@ const PrivacyPage = () => {
   useDocumentMeta({
     title: "Privacy Policy - More.ad",
     description: "Read More.ad's privacy policy to understand how we collect, use, and protect your personal information.",
-    ogUrl: "https://more-ad.lovable.app/privacy",
+    ogUrl: "https://more.ad/privacy",
   });
 
   return (

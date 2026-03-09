@@ -12,7 +12,7 @@ import { useDocumentMeta, DEFAULT_TITLE, DEFAULT_DESCRIPTION } from "@/hooks/use
 
 const Index = () => {
   const location = useLocation();
-  useDocumentMeta({ title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, ogUrl: "https://more-ad.lovable.app" });
+  useDocumentMeta({ title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, ogUrl: "https://more.ad" });
 
   useEffect(() => {
     if (location.hash) {

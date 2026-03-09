@@ -15,7 +15,7 @@ const AboutPage = () => {
   useDocumentMeta({
     title: "About More.ad - Our Mission & Story",
     description: "Learn about More.ad's mission to democratize advertising with AI. We help creators and businesses generate high-converting ads in seconds.",
-    ogUrl: "https://more-ad.lovable.app/about",
+    ogUrl: "https://more.ad/about",
   });
 
   return (
