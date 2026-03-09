@@ -22,6 +22,7 @@ export default function AppPage() {
   const [currentAd, setCurrentAd] = useState<GeneratedAd | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [lastInput, setLastInput] = useState<{ input: string; inputType: "image" | "url" | "description"; styleId: string; language: string } | null>(null);
   
   // Session timeout - auto logout after 15 minutes of inactivity
   useSessionTimeout(isAuthenticated);
