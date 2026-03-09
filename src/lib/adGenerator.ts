@@ -37,6 +37,7 @@ export const generateAd = async (
     cta: data.cta,
     targetAudience: data.targetAudience,
     images: data.images,
+    videoUrl: data.videoUrl || null,
     style: data.style,
     language: data.language || language,
     createdAt: new Date(data.createdAt),

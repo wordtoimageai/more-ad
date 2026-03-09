@@ -58,6 +58,7 @@ export const getCloudHistory = async (): Promise<GeneratedAd[]> => {
     cta: item.cta,
     targetAudience: item.target_audience,
     images: item.images,
+    videoUrl: item.video_url || null,
     style: item.style,
     language: item.language || "auto",
     createdAt: new Date(item.created_at),
