@@ -17,6 +17,7 @@ export const saveAdToCloud = async (ad: GeneratedAd): Promise<string> => {
     cta: ad.cta,
     target_audience: ad.targetAudience,
     images: ad.images,
+    video_url: ad.videoUrl || null,
     style: ad.style,
     language: ad.language || "auto",
     input_type: ad.input.type,
