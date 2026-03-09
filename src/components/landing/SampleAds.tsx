@@ -1,5 +1,8 @@
 import { motion } from "framer-motion";
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
+import sampleCoffee from "@/assets/sample-ad-coffee.jpg";
+import sampleSkincare from "@/assets/sample-ad-skincare.jpg";
+import sampleKitchen from "@/assets/sample-ad-kitchen.jpg";
 
 const sampleAds = [
   {
@@ -8,6 +11,7 @@ const sampleAds = [
     body: "Start every day with the perfect brew. Our artisan coffee beans are sourced from the world's finest farms.",
     hashtags: "#CoffeeLovers #MorningRoutine #ArtisanCoffee",
     cta: "Shop Now",
+    image: sampleCoffee,
     engagement: { likes: "12.4K", comments: "892" },
   },
   {
@@ -16,6 +20,7 @@ const sampleAds = [
     body: "POV: You finally found skincare that actually works. 30-day transformation challenge starts NOW.",
     hashtags: "#SkincareTok #GlowUp #BeautyHacks",
     cta: "Try Free",
+    image: sampleSkincare,
     engagement: { likes: "45.2K", comments: "2.1K" },
   },
   {
@@ -24,6 +29,7 @@ const sampleAds = [
     body: "Professional-grade cookware at home chef prices. Join 50,000+ happy cooks who've upgraded their kitchen game.",
     hashtags: "#HomeChef #CookingLife #KitchenGoals",
     cta: "Learn More",
+    image: sampleKitchen,
     engagement: { likes: "8.7K", comments: "645" },
   },
 ];
@@ -67,8 +73,13 @@ const SampleAds = () => {
               </div>
 
               {/* Ad Image Placeholder */}
-              <div className="aspect-square bg-gradient-to-br from-muted to-card flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full gradient-bg opacity-50 animate-pulse-slow" />
+              <div className="aspect-square overflow-hidden">
+                <img 
+                  src={ad.image} 
+                  alt={`${ad.platform} ad example - ${ad.headline}`}
+                  loading="lazy"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
               </div>
 
               {/* Ad Content */}
