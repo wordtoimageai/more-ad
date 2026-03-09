@@ -19,7 +19,7 @@ const TermsPage = () => {
   useDocumentMeta({
     title: "Terms of Service - More.ad",
     description: "Read the More.ad Terms of Service to understand the rules and guidelines for using our AI-powered ad generation platform.",
-    ogUrl: "https://more-ad.lovable.app/terms",
+    ogUrl: "https://more.ad/terms",
   });
 
   return (

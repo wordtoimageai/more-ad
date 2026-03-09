@@ -16,7 +16,7 @@ const ContactPage = () => {
   useDocumentMeta({
     title: "Contact More.ad - Get in Touch",
     description: "Have questions about More.ad? Contact our team for support, partnerships, or feedback. We'd love to hear from you.",
-    ogUrl: "https://more-ad.lovable.app/contact",
+    ogUrl: "https://more.ad/contact",
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

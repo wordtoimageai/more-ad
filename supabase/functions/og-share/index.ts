@@ -46,8 +46,8 @@ serve(async (req) => {
 
     const headline = escapeHtml(data.headline);
     const description = escapeHtml(data.body_short);
-    const image = data.images?.[0] || "https://more-ad.lovable.app/favicon.png";
-    const shareUrl = `https://more-ad.lovable.app/share/${encodeURIComponent(shareToken)}`;
+    const image = data.images?.[0] || "https://more.ad/favicon.png";
+    const shareUrl = `https://more.ad/share/${encodeURIComponent(shareToken)}`;
 
     return new Response(
       JSON.stringify({

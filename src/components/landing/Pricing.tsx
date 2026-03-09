@@ -118,7 +118,7 @@ const Pricing = () => {
               </ul>
 
               {plan.cta === "Contact Sales" ? (
-                <a href="mailto:sales@more-ad.lovable.app">
+                <a href="mailto:sales@more.ad">
                   <Button 
                     variant="outline" 
                     className="w-full"
