@@ -11,7 +11,7 @@ interface DocumentMeta {
 const DEFAULT_TITLE = "More.ad - AI-Powered Ad Generation";
 const DEFAULT_DESCRIPTION = "Create high-converting ad copy in seconds with AI. Generate compelling headlines, body copy, hashtags, and CTAs for any product or service.";
 const DEFAULT_OG_IMAGE = "https://lovable.dev/opengraph-image-p98pqg.png";
-const SITE_URL = "https://more-ad.lovable.app";
+const SITE_URL = "https://more.ad";
 
 function setMetaTag(attr: "property" | "name", key: string, content: string) {
   let el = document.querySelector(`meta[${attr}="${key}"]`);
