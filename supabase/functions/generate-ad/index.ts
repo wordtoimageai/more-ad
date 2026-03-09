@@ -200,15 +200,19 @@ async function generateImageWithReplicate(prompt: string, apiToken: string): Pro
 
 async function generateVideoWithReplicate(prompt: string, apiToken: string): Promise<string | null> {
   try {
-    // Using minimax/video-01 for video generation
+    // Using wan-video/wan-2.1-1.3b for video generation
     const output = await callReplicate(
-      "minimax/video-01",
+      "wan-video/wan-2.1-1.3b",
       {
         prompt: `Professional advertising video: ${prompt}. Short, engaging, high quality.`,
       },
       apiToken,
     );
+    // Output is a FileOutput - extract URL
     if (typeof output === "string") return output;
+    if (output && typeof output === "object" && "url" in (output as Record<string, unknown>)) {
+      return String((output as Record<string, unknown>).url);
+    }
     if (Array.isArray(output) && output.length > 0) return String(output[0]);
     return null;
   } catch (err) {
