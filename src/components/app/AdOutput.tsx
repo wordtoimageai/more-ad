@@ -227,11 +227,29 @@ const AdOutput = ({ ad, isGenerating, onAdUpdate }: AdOutputProps) => {
         content={ad.targetAudience}
       />
 
+      {/* Generated Video */}
+      {ad.videoUrl && (
+        <div className="glass gradient-border rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Video className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold">Generated Video</span>
+          </div>
+          <div className="rounded-lg overflow-hidden bg-muted">
+            <video
+              src={ad.videoUrl}
+              controls
+              className="w-full rounded-lg"
+              preload="metadata"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Generated Images */}
       <div className="glass gradient-border rounded-xl p-4">
         <div className="flex items-center gap-2 mb-3">
           <ImageIcon className="w-4 h-4 text-primary" />
-          <span className="text-sm font-semibold">Suggested Creatives</span>
+          <span className="text-sm font-semibold">Generated Creatives</span>
         </div>
         <div className="grid grid-cols-3 gap-3">
           {ad.images.map((image, index) => (
