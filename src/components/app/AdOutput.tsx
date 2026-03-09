@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { GeneratedAd, RTL_LANGUAGES } from "@/types/ad";
 import { Button } from "@/components/ui/button";
-import { Copy, Download, Check, Hash, Target, Megaphone, ImageIcon, Share2, Link } from "lucide-react";
+import { Copy, Download, Check, Hash, Target, Megaphone, ImageIcon, Share2, Video } from "lucide-react";
 import { useState } from "react";
 import { copyToClipboard, formatAdForCopy, exportToTxt } from "@/lib/export";
 import { toast } from "@/hooks/use-toast";
