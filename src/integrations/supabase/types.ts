@@ -31,6 +31,7 @@ export type Database = {
           style: string
           target_audience: string
           user_id: string
+          video_url: string | null
         }
         Insert: {
           body_long: string
@@ -48,6 +49,7 @@ export type Database = {
           style: string
           target_audience: string
           user_id: string
+          video_url?: string | null
         }
         Update: {
           body_long?: string
@@ -65,6 +67,7 @@ export type Database = {
           style?: string
           target_audience?: string
           user_id?: string
+          video_url?: string | null
         }
         Relationships: []
       }
