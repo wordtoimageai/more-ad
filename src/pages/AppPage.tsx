@@ -40,6 +40,7 @@ export default function AppPage() {
     language: string
   ) => {
     setIsGenerating(true);
+    setLastInput({ input, inputType, styleId, language });
     try {
       const ad = await generateAd(input, inputType, styleId, language);
       
@@ -53,6 +54,12 @@ export default function AppPage() {
       toast.error(error instanceof Error ? error.message : "Failed to generate ad");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleRegenerate = () => {
+    if (lastInput) {
+      handleGenerate(lastInput.input, lastInput.inputType, lastInput.styleId, lastInput.language);
     }
   };
 
