@@ -22,6 +22,7 @@ export default function AppPage() {
   const [currentAd, setCurrentAd] = useState<GeneratedAd | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [lastInput, setLastInput] = useState<{ input: string; inputType: "image" | "url" | "description"; styleId: string; language: string } | null>(null);
   
   // Session timeout - auto logout after 15 minutes of inactivity
   useSessionTimeout(isAuthenticated);
@@ -39,6 +40,7 @@ export default function AppPage() {
     language: string
   ) => {
     setIsGenerating(true);
+    setLastInput({ input, inputType, styleId, language });
     try {
       const ad = await generateAd(input, inputType, styleId, language);
       
@@ -52,6 +54,12 @@ export default function AppPage() {
       toast.error(error instanceof Error ? error.message : "Failed to generate ad");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleRegenerate = () => {
+    if (lastInput) {
+      handleGenerate(lastInput.input, lastInput.inputType, lastInput.styleId, lastInput.language);
     }
   };
 
@@ -150,7 +158,7 @@ export default function AppPage() {
               </span>
               Generated Ad
             </h2>
-            <AdOutput ad={currentAd} isGenerating={isGenerating} onAdUpdate={setCurrentAd} />
+            <AdOutput ad={currentAd} isGenerating={isGenerating} onAdUpdate={setCurrentAd} onRegenerate={lastInput ? handleRegenerate : undefined} />
           </motion.div>
         </div>
       </main>

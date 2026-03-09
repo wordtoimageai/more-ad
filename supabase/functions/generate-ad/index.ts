@@ -27,7 +27,6 @@ interface RateLimitResult {
 }
 
 const MAX_INPUT_LENGTH = 10000;
-const MAX_STYLE_ID_LENGTH = 50;
 const MAX_STYLE_NAME_LENGTH = 100;
 const MAX_AI_FIELD_LENGTH = 5000;
 const VALID_INPUT_TYPES = ["image", "url", "description"] as const;
@@ -62,6 +61,7 @@ function validateAIResponse(content: unknown): {
   data: { 
     headline: string; bodyShort: string; bodyLong: string; 
     hashtags: string[]; cta: string; targetAudience: string; 
+    imagePrompt?: string;
   } 
 } | { valid: false; error: string } {
   if (!content || typeof content !== 'object') {
@@ -86,6 +86,7 @@ function validateAIResponse(content: unknown): {
       hashtags: sanitizedHashtags,
       cta: sanitizeAIContent(String(obj.cta || '')),
       targetAudience: sanitizeAIContent(String(obj.targetAudience || '')),
+      imagePrompt: typeof obj.imagePrompt === 'string' ? obj.imagePrompt : undefined,
     }
   };
 }
@@ -97,6 +98,7 @@ function getSafeErrorMessage(error: unknown): string {
     if (message.includes('authentication') || message.includes('auth')) return 'Authentication required.';
     if (message.includes('validation')) return 'Invalid request data.';
     if (message.includes('parse') || message.includes('json')) return 'Failed to process AI response.';
+    if (message.includes('payment required') || message.includes('402')) return 'AI service credits exhausted. Please try again later.';
   }
   return 'An error occurred while generating your ad. Please try again.';
 }
@@ -116,7 +118,7 @@ function validateRequest(body: unknown): { valid: true; data: AdRequest } | { va
   if (!body || typeof body !== 'object') return { valid: false, error: "Invalid request body" };
   const { input, inputType, styleId, styleName, language } = body as Record<string, unknown>;
   if (typeof input !== 'string' || input.trim().length === 0) return { valid: false, error: "Input is required" };
-  if (input.length > MAX_INPUT_LENGTH) return { valid: false, error: `Input exceeds maximum length` };
+  if (input.length > MAX_INPUT_LENGTH) return { valid: false, error: "Input exceeds maximum length" };
   if (!VALID_INPUT_TYPES.includes(inputType as typeof VALID_INPUT_TYPES[number])) return { valid: false, error: "Invalid input type" };
   if (inputType === "url" && !isValidUrl(input)) return { valid: false, error: "Invalid URL format" };
   if (typeof styleId !== 'string' || !VALID_STYLE_IDS.includes(styleId as typeof VALID_STYLE_IDS[number])) return { valid: false, error: "Invalid style ID" };
@@ -135,106 +137,119 @@ function validateRequest(body: unknown): { valid: true; data: AdRequest } | { va
   };
 }
 
-// --- Replicate helpers ---
+// --- Lovable AI Gateway for text generation ---
 
-async function callReplicate(modelVersion: string, input: Record<string, unknown>, apiToken: string): Promise<unknown> {
-  // Create prediction
-  const createRes = await fetch("https://api.replicate.com/v1/predictions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ version: modelVersion, input }),
-  });
+async function generateTextWithAI(systemPrompt: string, userPrompt: string, apiKey: string): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
-  if (!createRes.ok) {
-    const errBody = await createRes.text();
-    throw new Error(`Replicate create failed [${createRes.status}]: ${errBody}`);
-  }
-
-  let prediction = await createRes.json();
-
-  // Poll for completion (max 120s)
-  const maxWait = 120_000;
-  const start = Date.now();
-  while (prediction.status !== "succeeded" && prediction.status !== "failed" && prediction.status !== "canceled") {
-    if (Date.now() - start > maxWait) throw new Error("Replicate prediction timed out");
-    await new Promise(r => setTimeout(r, 2000));
-    const pollRes = await fetch(prediction.urls.get, {
-      headers: { "Authorization": `Bearer ${apiToken}` },
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 2048,
+      }),
+      signal: controller.signal,
     });
-    prediction = await pollRes.json();
-  }
 
-  if (prediction.status !== "succeeded") {
-    throw new Error(`Replicate prediction failed: ${prediction.error || "unknown error"}`);
-  }
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded from AI gateway");
+    }
+    if (response.status === 402) {
+      throw new Error("Payment required - AI credits exhausted");
+    }
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("AI gateway error:", response.status, errText);
+      throw new Error(`AI gateway error [${response.status}]`);
+    }
 
-  return prediction.output;
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new Error("Empty AI response");
+    return content;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
-async function generateImageWithReplicate(prompt: string, apiToken: string): Promise<string[]> {
+// --- Replicate for image generation (fixed API endpoint) ---
+
+async function generateImagesWithReplicate(prompt: string, apiToken: string): Promise<string[]> {
   try {
-    // Using FLUX Schnell model for fast image generation
-    const output = await callReplicate(
-      "black-forest-labs/flux-schnell",
-      {
-        prompt: `Professional advertising creative: ${prompt}`,
-        num_outputs: 3,
-        aspect_ratio: "1:1",
-        output_format: "webp",
-        output_quality: 90,
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
+    // Use the official models endpoint for official models
+    const createRes = await fetch("https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+        "Prefer": "wait",
       },
-      apiToken,
-    );
-    if (Array.isArray(output) && output.length > 0) {
-      return output.map((url: unknown) => String(url));
+      body: JSON.stringify({
+        input: {
+          prompt: `Professional advertising creative: ${prompt}`,
+          num_outputs: 3,
+          aspect_ratio: "1:1",
+          output_format: "webp",
+          output_quality: 90,
+        },
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!createRes.ok) {
+      const errBody = await createRes.text();
+      console.error("Replicate create failed:", createRes.status, errBody);
+      return [];
+    }
+
+    let prediction = await createRes.json();
+
+    // If not using "Prefer: wait", poll for completion
+    if (prediction.status !== "succeeded") {
+      const maxWait = 60_000;
+      const start = Date.now();
+      while (prediction.status !== "succeeded" && prediction.status !== "failed" && prediction.status !== "canceled") {
+        if (Date.now() - start > maxWait) {
+          console.error("Replicate image prediction timed out");
+          return [];
+        }
+        await new Promise(r => setTimeout(r, 2000));
+        const pollRes = await fetch(prediction.urls.get, {
+          headers: { "Authorization": `Bearer ${apiToken}` },
+        });
+        prediction = await pollRes.json();
+      }
+    }
+
+    if (prediction.status !== "succeeded" || !prediction.output) {
+      console.error("Replicate image prediction failed:", prediction.error);
+      return [];
+    }
+
+    if (Array.isArray(prediction.output)) {
+      return prediction.output.map((url: unknown) => String(url));
     }
     return [];
   } catch (err) {
-    console.error("Replicate image generation failed:", err);
+    console.error("Replicate image generation error:", err);
     return [];
   }
-}
-
-async function generateVideoWithReplicate(prompt: string, apiToken: string): Promise<string | null> {
-  try {
-    // Using wan-video/wan-2.1-1.3b for video generation
-    const output = await callReplicate(
-      "wan-video/wan-2.1-1.3b",
-      {
-        prompt: `Professional advertising video: ${prompt}. Short, engaging, high quality.`,
-      },
-      apiToken,
-    );
-    // Output is a FileOutput - extract URL
-    if (typeof output === "string") return output;
-    if (output && typeof output === "object" && "url" in (output as Record<string, unknown>)) {
-      return String((output as Record<string, unknown>).url);
-    }
-    if (Array.isArray(output) && output.length > 0) return String(output[0]);
-    return null;
-  } catch (err) {
-    console.error("Replicate video generation failed:", err);
-    return null;
-  }
-}
-
-async function generateTextWithReplicate(systemPrompt: string, userPrompt: string, apiToken: string): Promise<string> {
-  // Using Meta Llama 3 for text generation
-  const output = await callReplicate(
-    "meta/meta-llama-3-70b-instruct",
-    {
-      prompt: `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n${systemPrompt}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n${userPrompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n`,
-      max_tokens: 2048,
-      temperature: 0.7,
-    },
-    apiToken,
-  );
-  if (Array.isArray(output)) return output.join("");
-  if (typeof output === "string") return output;
-  throw new Error("Unexpected Replicate text output format");
 }
 
 function getStyleGuidelines(styleId: string, language: string): string {
@@ -299,6 +314,11 @@ serve(async (req) => {
 
     const { input, inputType, styleId, styleName, language } = validation.data;
     
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
     const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
     if (!REPLICATE_API_TOKEN) {
       throw new Error("REPLICATE_API_TOKEN is not configured");
@@ -333,13 +353,12 @@ Respond ONLY with valid JSON. No markdown, no explanations.`;
 
     const userPrompt = `Create ad copy for the following ${inputType}:\n${input}\n\nGenerate compelling, ${styleName.toLowerCase()}-style advertising content.`;
 
-    // Generate text with Replicate
-    const textOutput = await generateTextWithReplicate(systemPrompt, userPrompt, REPLICATE_API_TOKEN);
+    // Step 1: Generate text with Lovable AI Gateway
+    const textOutput = await generateTextWithAI(systemPrompt, userPrompt, LOVABLE_API_KEY);
 
     let parsedContent;
     try {
       const cleanContent = textOutput.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      // Find the JSON object in the output
       const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No JSON found");
       parsedContent = JSON.parse(jsonMatch[0]);
@@ -351,15 +370,10 @@ Respond ONLY with valid JSON. No markdown, no explanations.`;
     if (!aiValidation.valid) throw new Error("AI response validation failed");
 
     const adContent = aiValidation.data;
-    const imagePrompt = typeof parsedContent.imagePrompt === 'string' 
-      ? parsedContent.imagePrompt 
-      : `Professional ad creative for: ${adContent.headline}`;
+    const imagePrompt = adContent.imagePrompt || `Professional ad creative for: ${adContent.headline}`;
 
-    // Generate images and video in parallel with Replicate
-    const [images, videoUrl] = await Promise.all([
-      generateImageWithReplicate(imagePrompt, REPLICATE_API_TOKEN),
-      generateVideoWithReplicate(imagePrompt, REPLICATE_API_TOKEN),
-    ]);
+    // Step 2: Generate images with Replicate (correct API)
+    const images = await generateImagesWithReplicate(imagePrompt, REPLICATE_API_TOKEN);
 
     // Fallback images if Replicate fails
     const finalImages = images.length > 0 ? images : [
@@ -377,7 +391,7 @@ Respond ONLY with valid JSON. No markdown, no explanations.`;
       cta: adContent.cta || sanitizeAIContent("Shop Now"),
       targetAudience: adContent.targetAudience || sanitizeAIContent("General audience"),
       images: finalImages,
-      videoUrl,
+      videoUrl: null,
       style: styleName,
       language,
       createdAt: new Date().toISOString(),
@@ -388,6 +402,7 @@ Respond ONLY with valid JSON. No markdown, no explanations.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("generate-ad error:", error);
     return new Response(JSON.stringify({ error: getSafeErrorMessage(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
