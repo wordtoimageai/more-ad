@@ -27,7 +27,7 @@ const AdInput = ({ onGenerate, isGenerating }: AdInputProps) => {
   const inputTypes = [
     { id: "description", label: "Description", icon: FileText },
     { id: "url", label: "URL", icon: Link },
-    { id: "image", label: "Image", icon: Upload },
+    { id: "image", label: "Image URL", icon: Upload },
   ];
 
   const handleGenerate = () => {
