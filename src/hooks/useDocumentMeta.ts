@@ -6,6 +6,7 @@ interface DocumentMeta {
   ogImage?: string;
   ogUrl?: string;
   ogType?: string;
+  noIndex?: boolean;
 }
 
 const DEFAULT_TITLE = "More.ad - AI-Powered Ad Generation";
