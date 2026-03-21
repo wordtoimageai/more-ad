@@ -16,6 +16,23 @@ const Index = () => {
   const navigate = useNavigate();
   useDocumentMeta({ title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, ogUrl: "https://more.ad" });
 
+  // Redirect authenticated users to /app (handles OAuth callback landing on /)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          navigate("/app");
+        }
+      }
+    );
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        navigate("/app");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   useEffect(() => {
     if (location.hash) {
       setTimeout(() => {
