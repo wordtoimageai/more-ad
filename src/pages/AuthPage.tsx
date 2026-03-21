@@ -123,7 +123,7 @@ export default function AuthPage() {
           }
           return;
         }
-        toast.success("Account created! Welcome to More.ad");
+        toast.success("Account created! Please check your email to verify your account before signing in.");
       }
     } catch (err) {
       toast.error("An unexpected error occurred");
@@ -278,7 +278,7 @@ export default function AuthPage() {
                   onClick={async () => {
                     setIsLoading(true);
                     const { error } = await lovable.auth.signInWithOAuth("google", {
-                      redirect_uri: window.location.origin,
+                      redirect_uri: `${window.location.origin}/auth`,
                     });
                     if (error) {
                       toast.error("Google sign-in failed");
