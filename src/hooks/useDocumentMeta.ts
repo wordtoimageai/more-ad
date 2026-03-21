@@ -6,6 +6,7 @@ interface DocumentMeta {
   ogImage?: string;
   ogUrl?: string;
   ogType?: string;
+  noIndex?: boolean;
 }
 
 const DEFAULT_TITLE = "More.ad - AI-Powered Ad Generation";
@@ -23,10 +24,15 @@ function setMetaTag(attr: "property" | "name", key: string, content: string) {
   el.setAttribute("content", content);
 }
 
-export function useDocumentMeta({ title, description, ogImage, ogUrl, ogType }: DocumentMeta) {
+export function useDocumentMeta({ title, description, ogImage, ogUrl, ogType, noIndex }: DocumentMeta) {
   useEffect(() => {
     const prevTitle = document.title;
     document.title = title;
+
+    // Handle noindex
+    if (noIndex) {
+      setMetaTag("name", "robots", "noindex, nofollow");
+    }
 
     const desc = description || DEFAULT_DESCRIPTION;
     const image = ogImage || DEFAULT_OG_IMAGE;
@@ -55,7 +61,7 @@ export function useDocumentMeta({ title, description, ogImage, ogUrl, ogType }: 
       document.title = prevTitle;
       if (metaDesc) metaDesc.setAttribute("content", prevDesc);
     };
-  }, [title, description, ogImage, ogUrl, ogType]);
+  }, [title, description, ogImage, ogUrl, ogType, noIndex]);
 }
 
 export { DEFAULT_TITLE, DEFAULT_DESCRIPTION };

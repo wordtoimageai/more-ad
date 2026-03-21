@@ -37,6 +37,7 @@ const BlogPage = () => {
     title: "More.ad Blog - Ad Tips, AI Insights & Product Updates",
     description: "Stay up to date with the latest in AI advertising, copywriting tips, platform strategies, and More.ad product news.",
     ogUrl: "https://more.ad/blog",
+    noIndex: true,
   });
 
   return (
