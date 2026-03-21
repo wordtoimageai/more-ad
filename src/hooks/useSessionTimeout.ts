@@ -7,7 +7,7 @@ const ACTIVITY_EVENTS = ["mousedown", "keydown", "scroll", "touchstart", "mousem
 
 export function useSessionTimeout(isAuthenticated: boolean) {
   const { toast } = useToast();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
 
   const handleLogout = useCallback(async () => {
