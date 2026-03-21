@@ -33,8 +33,6 @@ export function useDocumentMeta({ title, description, ogImage, ogUrl, ogType, no
     if (noIndex) {
       setMetaTag("name", "robots", "noindex, nofollow");
     }
-    const prevTitle = document.title;
-    document.title = title;
 
     const desc = description || DEFAULT_DESCRIPTION;
     const image = ogImage || DEFAULT_OG_IMAGE;
