@@ -63,7 +63,7 @@ export function useDocumentMeta({ title, description, ogImage, ogUrl, ogType, no
       document.title = prevTitle;
       if (metaDesc) metaDesc.setAttribute("content", prevDesc);
     };
-  }, [title, description, ogImage, ogUrl, ogType]);
+  }, [title, description, ogImage, ogUrl, ogType, noIndex]);
 }
 
 export { DEFAULT_TITLE, DEFAULT_DESCRIPTION };
