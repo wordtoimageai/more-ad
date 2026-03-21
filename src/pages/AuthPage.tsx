@@ -295,6 +295,7 @@ export default function AuthPage() {
                   Continue with Google
                 </Button>
               </>
+            )}
 
             <div className="mt-6 text-center">
               {mode === "forgot" ? (
