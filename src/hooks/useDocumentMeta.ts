@@ -24,8 +24,15 @@ function setMetaTag(attr: "property" | "name", key: string, content: string) {
   el.setAttribute("content", content);
 }
 
-export function useDocumentMeta({ title, description, ogImage, ogUrl, ogType }: DocumentMeta) {
+export function useDocumentMeta({ title, description, ogImage, ogUrl, ogType, noIndex }: DocumentMeta) {
   useEffect(() => {
+    const prevTitle = document.title;
+    document.title = title;
+
+    // Handle noindex
+    if (noIndex) {
+      setMetaTag("name", "robots", "noindex, nofollow");
+    }
     const prevTitle = document.title;
     document.title = title;
 
