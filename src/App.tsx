@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 
 const Index = lazy(() => import("./pages/Index"));
 const AppPage = lazy(() => import("./pages/AppPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const SharePage = lazy(() => import("./pages/SharePage"));
@@ -38,6 +39,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/app" element={<AppPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/share/:shareToken" element={<SharePage />} />

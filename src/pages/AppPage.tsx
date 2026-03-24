@@ -10,7 +10,7 @@ import { generateAd } from "@/lib/adGenerator";
 import { saveAdToCloud } from "@/lib/cloudStorage";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { History, LogOut, Loader2 } from "lucide-react";
+import { History, LogOut, Loader2, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
@@ -94,6 +94,14 @@ export default function AppPage() {
             <span className="text-sm text-muted-foreground hidden sm:block">
               {user?.email}
             </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/dashboard")}
+              title="Dashboard"
+            >
+              <LayoutDashboard className="w-5 h-5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
