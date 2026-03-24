@@ -10,7 +10,7 @@ import { generateAd } from "@/lib/adGenerator";
 import { saveAdToCloud } from "@/lib/cloudStorage";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { History, LogOut, Loader2 } from "lucide-react";
+import { History, LogOut, Loader2, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
