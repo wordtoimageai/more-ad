@@ -39,6 +39,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/app" element={<AppPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/share/:shareToken" element={<SharePage />} />

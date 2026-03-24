@@ -97,6 +97,14 @@ export default function AppPage() {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => navigate("/dashboard")}
+              title="Dashboard"
+            >
+              <LayoutDashboard className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsHistoryOpen(true)}
               className="relative"
             >
