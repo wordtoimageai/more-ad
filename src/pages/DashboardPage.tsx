@@ -60,6 +60,33 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated]);
 
+  const loadProfile = async () => {
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", user?.id ?? "")
+        .single();
+      if (data?.display_name) setDisplayName(data.display_name);
+    } catch {}
+  };
+
+  const handleSaveName = async () => {
+    setSavingName(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: displayName.trim() } as any)
+        .eq("user_id", user?.id ?? "");
+      if (error) throw error;
+      toast.success("Display name updated");
+    } catch {
+      toast.error("Failed to update display name");
+    } finally {
+      setSavingName(false);
+    }
+  };
+
   const loadStats = async () => {
     setStatsLoading(true);
     try {
