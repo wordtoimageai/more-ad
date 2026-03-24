@@ -279,6 +279,24 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
+                  <Label className="text-muted-foreground text-xs uppercase tracking-wider">Display Name</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Enter your name"
+                      className="flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleSaveName}
+                      disabled={savingName || !displayName.trim()}
+                    >
+                      {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+                    </Button>
+                  </div>
+                </div>
+                <div>
                   <Label className="text-muted-foreground text-xs uppercase tracking-wider">Email</Label>
                   <p className="font-medium mt-1">{user?.email}</p>
                 </div>
