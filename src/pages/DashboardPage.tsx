@@ -54,7 +54,10 @@ export default function DashboardPage() {
   }, [authLoading, isAuthenticated, navigate]);
 
   useEffect(() => {
-    if (isAuthenticated) loadStats();
+    if (isAuthenticated) {
+      loadStats();
+      loadProfile();
+    }
   }, [isAuthenticated]);
 
   const loadStats = async () => {
