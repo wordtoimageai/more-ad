@@ -14,6 +14,7 @@ import { History, LogOut, Loader2, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AppPage() {
   useDocumentMeta({ title: "Create Ad | More.ad", description: "Generate high-converting ad copy with AI. Describe your product and get instant headlines, body copy, and CTAs.", ogUrl: "https://more.ad/app" });
@@ -23,9 +24,17 @@ export default function AppPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [lastInput, setLastInput] = useState<{ input: string; inputType: "image" | "url" | "description"; styleId: string; language: string } | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   
   // Session timeout - auto logout after 15 minutes of inactivity
   useSessionTimeout(isAuthenticated);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      supabase.from("profiles").select("display_name").eq("user_id", user.id).single()
+        .then(({ data }) => { if (data?.display_name) setDisplayName(data.display_name); });
+    }
+  }, [isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -50,7 +59,6 @@ export default function AppPage() {
       setCurrentAd(adWithDbId);
       toast.success("Ad generated and saved!");
     } catch (error) {
-      console.error("Error generating ad:", error);
       toast.error(error instanceof Error ? error.message : "Failed to generate ad");
     } finally {
       setIsGenerating(false);
@@ -92,7 +100,7 @@ export default function AppPage() {
           
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden sm:block">
-              {user?.email}
+              {displayName ? `Hi, ${displayName}` : user?.email}
             </span>
             <Button
               variant="ghost"
@@ -136,7 +144,7 @@ export default function AppPage() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
           {/* Input Panel */}
           <motion.div
             className="glass gradient-border rounded-2xl p-6"

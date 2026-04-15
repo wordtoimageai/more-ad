@@ -18,6 +18,7 @@ import {
   BarChart3, Calendar, Hash, Image, Loader2, LogOut, PenTool,
   Settings, Sparkles, TrendingUp, User, ArrowLeft, Trash2, Shield,
 } from "lucide-react";
+import PasswordStrengthIndicator, { isPasswordStrong } from "@/components/PasswordStrengthIndicator";
 
 interface AdStats {
   totalAds: number;
@@ -76,7 +77,7 @@ export default function DashboardPage() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ display_name: displayName.trim() } as any)
+        .update({ display_name: displayName.trim() })
         .eq("user_id", user?.id ?? "");
       if (error) throw error;
       toast.success("Display name updated");
@@ -142,8 +143,8 @@ export default function DashboardPage() {
   };
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (!isPasswordStrong(newPassword)) {
+      toast.error("Password does not meet strength requirements");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -410,10 +411,12 @@ export default function DashboardPage() {
                       id="new-pw"
                       type="password"
                       value={newPassword}
+                      autoComplete="new-password"
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••"
                       className="mt-1"
                     />
+                    <PasswordStrengthIndicator password={newPassword} />
                   </div>
                   <div>
                     <Label htmlFor="confirm-pw">Confirm Password</Label>

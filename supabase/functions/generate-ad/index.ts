@@ -121,6 +121,7 @@ function validateRequest(body: unknown): { valid: true; data: AdRequest } | { va
   if (input.length > MAX_INPUT_LENGTH) return { valid: false, error: "Input exceeds maximum length" };
   if (!VALID_INPUT_TYPES.includes(inputType as typeof VALID_INPUT_TYPES[number])) return { valid: false, error: "Invalid input type" };
   if (inputType === "url" && !isValidUrl(input)) return { valid: false, error: "Invalid URL format" };
+  if (inputType === "image" && !isValidUrl(input)) return { valid: false, error: "Invalid image URL format" };
   if (typeof styleId !== 'string' || !VALID_STYLE_IDS.includes(styleId as typeof VALID_STYLE_IDS[number])) return { valid: false, error: "Invalid style ID" };
   if (typeof styleName !== 'string' || styleName.length === 0 || styleName.length > MAX_STYLE_NAME_LENGTH) return { valid: false, error: "Invalid style name" };
   const lang = typeof language === 'string' ? language : 'auto';
@@ -377,9 +378,7 @@ Respond ONLY with valid JSON. No markdown, no explanations.`;
 
     // Fallback images if Replicate fails
     const finalImages = images.length > 0 ? images : [
-      "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
+      "/placeholder.svg",
     ];
 
     const result = {
