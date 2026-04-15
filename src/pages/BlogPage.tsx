@@ -2,8 +2,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { motion } from "framer-motion";
-import { Calendar, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Calendar } from "lucide-react";
 
 const posts = [
   {
@@ -63,7 +62,7 @@ const BlogPage = () => {
             {posts.map((post, i) => (
               <motion.article
                 key={post.title}
-                className="glass gradient-border rounded-2xl p-6 md:p-8 group hover:bg-card/80 transition-colors cursor-pointer"
+                className="glass gradient-border rounded-2xl p-6 md:p-8 transition-colors"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
@@ -76,14 +75,14 @@ const BlogPage = () => {
                     <Calendar className="w-3 h-3" />
                     {new Date(post.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </span>
+                  <span className="text-xs font-semibold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-full ml-auto">
+                    Coming Soon
+                  </span>
                 </div>
-                <h2 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                <h2 className="text-xl font-bold mb-2">
                   {post.title}
                 </h2>
-                <p className="text-muted-foreground text-sm mb-4">{post.excerpt}</p>
-                <span className="text-primary text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                  Read more <ArrowRight className="w-4 h-4" />
-                </span>
+                <p className="text-muted-foreground text-sm">{post.excerpt}</p>
               </motion.article>
             ))}
           </div>
